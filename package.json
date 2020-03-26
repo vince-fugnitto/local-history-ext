@@ -1,0 +1,52 @@
+{
+	"name": "local-history",
+	"publisher": "vince-fugnitto",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/vince-fugnitto/local-history-ext.git"
+	},
+	"displayName": "Local History",
+	"description": "local history vscode extension",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.43.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "local-history.echo",
+				"title": "Local History"
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile",
+		"test": "node ./out/test/runTest.js",
+		"lint": "eslint ."
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.1",
+		"@types/mocha": "^5.2.7",
+		"@types/node": "^12.11.7",
+		"@types/vscode": "^1.43.0",
+		"@typescript-eslint/eslint-plugin": "^2.25.0",
+		"@typescript-eslint/parser": "^2.25.0",
+		"eslint": "^6.8.0",
+		"eslint-config-google": "^0.14.0",
+		"glob": "^7.1.5",
+		"mocha": "^6.2.2",
+		"tslint": "^5.20.0",
+		"typescript": "^3.6.4",
+		"vscode-test": "^1.2.2"
+	}
+}
