@@ -1,10 +1,13 @@
-# Local History
-
+<br />
 <div align='center'>
 
 <img src='./assets/local-history.png' width='150px'/>
 
 </div>
+
+# Local History
+
+<img src='https://api.travis-ci.com/vince-fugnitto/local-history-ext.svg?branch=master' />
 
 ### Description
 
