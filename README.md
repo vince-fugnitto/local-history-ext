@@ -1,7 +1,7 @@
 <br />
 <div align='center'>
 
-<img src='./assets/local-history.png' width='150px'/>
+<img src='https://raw.githubusercontent.com/vince-fugnitto/local-history-ext/master/assets/local-history.png' width='125px'/>
 
 </div>
 
