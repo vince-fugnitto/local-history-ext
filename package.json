@@ -24,8 +24,20 @@
             {
                 "command": "local-history.echo",
                 "title": "Local History"
+            },
+            {
+                "command": "local-history.viewAllForActiveEditor",
+                "title": "Local History: Active Editor"
             }
-        ]
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "local-history.viewAllForActiveEditor",
+                    "when": "editorTextFocus"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
