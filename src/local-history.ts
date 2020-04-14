@@ -4,14 +4,50 @@ import fs = require('fs');
 
 export interface HistoryFileProperties {
     fileName: string;
-    timeStamp: string;
+    timestamp: string;
     uri: string;
     parentFileName: string;
 }
 
 export class LocalHistoryProvider {
-
     private historyFiles: any[] = [];
+
+    /**
+    * Load existing entries on activation from local file system
+    */
+    public loadEntriesOnActivation(): void {
+        const workspaceFolderPath: string = vscode.workspace.workspaceFolders![0].uri.path;
+        const relativeSearchFolderPrefix = '/.local-history';
+
+        fs.readdir(workspaceFolderPath + relativeSearchFolderPrefix, (err, files: string[]) => {
+            files.forEach((historyFileName: string) => {
+                const parentFileName = historyFileName.match('^[^_/]*')![0] + historyFileName.match('.[0-9a-z]+$')![0];
+                const data: HistoryFileProperties = {
+                    fileName: historyFileName,
+                    timestamp: this.parseTimestamp(historyFileName),
+                    uri: path.join(workspaceFolderPath, '.local-history', historyFileName),
+                    parentFileName: parentFileName
+                };
+                this.historyFiles.push(data);
+            });
+        });
+    }
+
+    /**
+     * Parse the file name of a local history file into the format for file properties   
+     */
+    private parseTimestamp(fileName: string): string {
+        const timestamp = fileName.match('_[^_]*')![0].substring(1);
+
+        const year = timestamp.substring(0, 4);
+        const month = timestamp.substring(4, 6);
+        const day = timestamp.substring(6, 8);
+        const hour = timestamp.substring(8, 10);
+        const minute = timestamp.substring(10, 12);
+        const second = timestamp.substring(12, 14);
+
+        return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+    }
 
     /**
      * View all history of the active editor
@@ -48,36 +84,35 @@ export class LocalHistoryProvider {
 
                     // get the file system path for the selection
                     const selectionFsPath = path.join(`${workspaceFolderPath}`, '.local-history', selection.label);
+
                     // create the document and show it in the UI
                     vscode.workspace.openTextDocument(selectionFsPath).then(doc => vscode.window.showTextDocument(doc), err => vscode.window.showInformationMessage(err.message));
                 });
         }
         else {
-            vscode.window.showInformationMessage('File does not belong to any workspace folder. Please save.');
+            vscode.window.showInformationMessage('File does not belong to a workspace. Please save.');
         }
     }
 
     /**
-     * Return the timestamp in the following format: 20200406102550_123.ts
+     * Return the timestamp in the following format: 2020-04-06 10:25:50.123
      */
-    private getCurrentTime(toISOString: boolean): string {
+    private getCurrentTime(): string {
         let time = new Date();
         time = new Date(time.getTime() - (time.getTimezoneOffset() * 60000));
-        if (toISOString) {
-            return time.toISOString().substring(0, 19).replace(/[T]/g, ' ');
-        }
-        return time.toISOString().substring(0, 23).replace(/[-:T.]/g, '');
+        return time.toISOString().substring(0, 23).replace(/[T]/g, ' ');
     }
 
     /**
      * Save the current context of the active editor
      */
-    public saveActiveEditorContext(document: vscode.TextDocument): HistoryFileProperties | undefined {
+    public saveActiveEditorContext(document: vscode.TextDocument): void {
         // get timestamp
-        const timestamp = this.getCurrentTime(false);
-        // filePath returns an absolute path     // use filePath.dir to get full directory path
+        const timestamp = this.getCurrentTime();
+        const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
+        const timestampForProperty = timestamp.substring(0, 19);
         const fileFullPath = path.parse(document.fileName);
-        const historyFileName = `${fileFullPath.name}_${timestamp.substring(0, 14)}_${timestamp.substring(14, 17)}${fileFullPath.ext}`;
+        const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
 
         if (vscode.workspace.getWorkspaceFolder(document.uri) !== undefined) {
             const workspaceFolderPath: string = vscode.workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
@@ -94,15 +129,13 @@ export class LocalHistoryProvider {
             const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
             fs.writeFileSync(historyFilePath, fileBuffer);
 
-            let data: HistoryFileProperties = {
+            const data: HistoryFileProperties = {
                 fileName: historyFileName,
-                timeStamp: this.getCurrentTime(true),
+                timestamp: timestampForProperty,
                 uri: historyFilePath,
-                parentFileName: fileFullPath.name + fileFullPath.ext
+                parentFileName: fileFullPath.base
             };
-
             this.historyFiles.push(data);
-            return data;
         }
     }
 }
