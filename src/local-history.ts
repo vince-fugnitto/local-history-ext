@@ -66,7 +66,7 @@ export class LocalHistoryProvider {
                     detail: vscode.workspace.asRelativePath(item.uri)
                 }));
 
-            if (items.length == 0) {
+            if (items.length === 0) {
                 vscode.window.showInformationMessage(`No local history file found for '${activeEditor.base}'`);
                 return;
             }
@@ -85,8 +85,8 @@ export class LocalHistoryProvider {
                     // get the file system path for the selection
                     const selectionFsPath = path.join(`${workspaceFolderPath}`, '.local-history', selection.label);
 
-                    // create the document and show it in the UI
-                    vscode.workspace.openTextDocument(selectionFsPath).then(doc => vscode.window.showTextDocument(doc), err => vscode.window.showInformationMessage(err.message));
+                    // show the diff between the active editor and the selected local history file
+                    this.displayDiff(vscode.Uri.file(selectionFsPath), textEditor.document.uri);
                 });
         }
         else {
@@ -136,6 +136,16 @@ export class LocalHistoryProvider {
                 parentFileName: fileFullPath.base
             };
             this.historyFiles.push(data);
+        }
+    }
+
+    /**
+     * Compare the two revisions and show the diff between them
+     */
+    private displayDiff(previous: vscode.Uri, current: vscode.Uri): void {
+        if (current && previous) {
+            let tabTitle = path.basename(previous.fsPath) + ' <-> ' + path.basename(current.fsPath);
+            vscode.commands.executeCommand('vscode.diff', previous, current, tabTitle);
         }
     }
 }
