@@ -28,7 +28,7 @@ export class LocalHistoryProvider {
                     uri: path.join(workspaceFolderPath, '.local-history', historyFileName),
                     parentFileName: parentFileName
                 };
-                this.historyFiles.push(data);
+                this.historyFiles.unshift(data);
             });
         });
     }
@@ -61,9 +61,8 @@ export class LocalHistoryProvider {
             const items: vscode.QuickPickItem[] = this.historyFiles.
                 filter(item => item.parentFileName === (activeEditor.base)).
                 map(item => ({
-                    label: item.fileName,
-                    description: item.timeStamp,
-                    detail: vscode.workspace.asRelativePath(item.uri)
+                    label: `$(calendar) ${item.timestamp}`,
+                    description: vscode.workspace.asRelativePath(item.uri)
                 }));
 
             if (items.length === 0) {
@@ -73,7 +72,7 @@ export class LocalHistoryProvider {
 
             vscode.window.showQuickPick(items,
                 {
-                    placeHolder: 'Please select a file in history to open',
+                    placeHolder: `Please select a local history revision for '${path.basename(textEditor.document.fileName)}'`,
                     matchOnDescription: true,
                     matchOnDetail: true
                 }).then((selection) => {
@@ -134,7 +133,7 @@ export class LocalHistoryProvider {
                 uri: historyFilePath,
                 parentFileName: fileFullPath.base
             };
-            this.historyFiles.push(data);
+            this.historyFiles.unshift(data);
         }
     }
 
