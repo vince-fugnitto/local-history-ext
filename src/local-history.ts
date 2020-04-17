@@ -34,7 +34,7 @@ export class LocalHistoryProvider {
     }
 
     /**
-     * Parse the file name of a local history file into the format for file properties   
+     * Parse the file name of a local history file into the format for file properties
      */
     private parseTimestamp(fileName: string): string {
         const timestamp = fileName.match('_[^_]*')![0].substring(1);
@@ -82,10 +82,10 @@ export class LocalHistoryProvider {
                         return;
                     }
 
-                    // get the file system path for the selection
+                    // Get the file system path for the selection
                     const selectionFsPath = path.join(`${workspaceFolderPath}`, '.local-history', selection.label);
 
-                    // show the diff between the active editor and the selected local history file
+                    // Show the diff between the active editor and the selected local history file
                     this.displayDiff(vscode.Uri.file(selectionFsPath), textEditor.document.uri);
                 });
         }
@@ -107,7 +107,6 @@ export class LocalHistoryProvider {
      * Save the current context of the active editor
      */
     public saveActiveEditorContext(document: vscode.TextDocument): void {
-        // get timestamp
         const timestamp = this.getCurrentTime();
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const timestampForProperty = timestamp.substring(0, 19);
@@ -119,12 +118,12 @@ export class LocalHistoryProvider {
 
             const historyFolderPath = path.join(workspaceFolderPath, '.local-history');
 
-            // create .local-history folder if it does not exist
+            // Create .local-history folder if it does not exist
             if (!fs.existsSync(historyFolderPath)) {
                 fs.mkdirSync(historyFolderPath, { recursive: true });
             }
 
-            // copy the content of the current active editor
+            // Copy the content of the current active editor
             const fileBuffer = fs.readFileSync(document.fileName);
             const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
             fs.writeFileSync(historyFilePath, fileBuffer);
@@ -144,7 +143,7 @@ export class LocalHistoryProvider {
      */
     private displayDiff(previous: vscode.Uri, current: vscode.Uri): void {
         if (current && previous) {
-            let tabTitle = path.basename(previous.fsPath) + ' <-> ' + path.basename(current.fsPath);
+            const tabTitle = path.basename(previous.fsPath) + ' <-> ' + path.basename(current.fsPath);
             vscode.commands.executeCommand('vscode.diff', previous, current, tabTitle);
         }
     }

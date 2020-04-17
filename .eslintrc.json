@@ -20,10 +20,12 @@
         "@typescript-eslint"
     ],
     "rules": {
+        "capitalized-comments": "error",
         "eol-last": [
             "error",
             "always"
         ],
+        "eqeqeq": "error",
         "no-multi-spaces": "error",
         "no-multiple-empty-lines": [
             "error",
@@ -32,6 +34,18 @@
             }
         ],
         "no-return-await": "error",
+        "no-shadow": "error",
+        "no-unused-vars": "error",
+        "no-unused-expressions": "error",
+        "no-unused-labels": "error",
+        "no-use-before-define": "error",
+        "no-var": "error",
+        "prefer-const": [
+            "error",
+            {
+                "destructuring": "all"
+            }
+        ],
         "quotes": [
             "error",
             "single"
