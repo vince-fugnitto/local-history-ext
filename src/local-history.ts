@@ -9,8 +9,11 @@ export interface HistoryFileProperties {
     parentFileName: string;
 }
 
+export const maxEntriesPerFile = 'local-history.maxEntriesPerFile';
+
 export class LocalHistoryProvider {
     private historyFiles: any[] = [];
+    private maxEntriesPerFile: number = this.getMaxResultsPerFile();
 
     /**
     * Load existing entries on activation from local file system
@@ -58,7 +61,7 @@ export class LocalHistoryProvider {
             const workspaceFolderPath: string = vscode.workspace.getWorkspaceFolder(textEditor.document.uri)!.uri.fsPath;
             const activeEditor = path.parse(textEditor.document.fileName);
 
-            const items: vscode.QuickPickItem[] = this.historyFiles.
+            let items: vscode.QuickPickItem[] = this.historyFiles.
                 filter(item => item.parentFileName === (activeEditor.base)).
                 map(item => ({
                     label: item.fileName,
@@ -71,6 +74,8 @@ export class LocalHistoryProvider {
                 return;
             }
 
+            // Limits the number of entries based on the preference 'local-history.maxEntriesPerFile`.
+            items = items.slice(0, this.maxEntriesPerFile);
             vscode.window.showQuickPick(items,
                 {
                     placeHolder: 'Please select a file in history to open',
@@ -134,7 +139,7 @@ export class LocalHistoryProvider {
                 uri: historyFilePath,
                 parentFileName: fileFullPath.base
             };
-            this.historyFiles.push(data);
+            this.historyFiles.unshift(data);
         }
     }
 
@@ -146,5 +151,19 @@ export class LocalHistoryProvider {
             const tabTitle = path.basename(previous.fsPath) + ' <-> ' + path.basename(current.fsPath);
             vscode.commands.executeCommand('vscode.diff', previous, current, tabTitle);
         }
+    }
+
+    /**
+     * Updates the value based on the current preference value set for 'local-history.maxEntriesPerFile'
+     */
+    public updateMaxEntriesPerFile(): void {
+        this.maxEntriesPerFile = this.getMaxResultsPerFile();
+    }
+
+    /**
+     * Get the number of max results for a given file based on the preference configuration.
+     */
+    private getMaxResultsPerFile(): number {
+        return vscode.workspace.getConfiguration().get(maxEntriesPerFile) as number;
     }
 }

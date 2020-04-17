@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { LocalHistoryProvider } from './local-history';
+import { LocalHistoryProvider, maxEntriesPerFile } from './local-history';
 
 export function activate(context: vscode.ExtensionContext) {
     const disposable: vscode.Disposable[] = [];
@@ -14,6 +14,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('The workspace has been updated!');
         if (vscode.workspace.workspaceFolders) {
             provider.loadEntriesOnActivation();
+        }
+    });
+
+    vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration(maxEntriesPerFile)) {
+            provider.updateMaxEntriesPerFile();
         }
     });
 
