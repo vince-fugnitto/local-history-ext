@@ -22,12 +22,9 @@
     "contributes": {
         "commands": [
             {
-                "command": "local-history.echo",
-                "title": "Local History"
-            },
-            {
                 "command": "local-history.viewAllForActiveEditor",
-                "title": "Local History: Active Editor"
+                "title": "Local History: Active Editor",
+                "when": "editorTextFocus"
             }
         ],
         "menus": {

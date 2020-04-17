@@ -1,6 +1,7 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
-import path = require('path');
-import fs = require('fs');
+import { LocalHistoryPreferenceService } from './local-history-preference-service';
 
 export interface HistoryFileProperties {
     fileName: string;
@@ -9,16 +10,30 @@ export interface HistoryFileProperties {
     parentFileName: string;
 }
 
-export const maxEntriesPerFile = 'local-history.maxEntriesPerFile';
+export class LocalHistoryManager {
 
-export class LocalHistoryProvider {
     private historyFiles: any[] = [];
-    private maxEntriesPerFile: number = this.getMaxResultsPerFile();
+    private localHistoryPreferenceService: LocalHistoryPreferenceService = new LocalHistoryPreferenceService();
+
+    constructor() {
+        this.loadLocalHistory();
+        vscode.workspace.onDidChangeWorkspaceFolders(() => {
+            this.loadLocalHistory();
+        });
+        vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+            this.saveActiveEditorContext(document);
+        });
+    }
 
     /**
-    * Load existing entries on activation from local file system
+    * Load existing entries on activation from local file system.
     */
-    public loadEntriesOnActivation(): void {
+    public loadLocalHistory(): void {
+
+        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
+            return;
+        }
+
         const workspaceFolderPath: string = vscode.workspace.workspaceFolders![0].uri.path;
         const relativeSearchFolderPrefix = '/.local-history';
 
@@ -37,7 +52,7 @@ export class LocalHistoryProvider {
     }
 
     /**
-     * Parse the file name of a local history file into the format for file properties
+     * Parse the file name of a local history file into the format for file properties.
      */
     private parseTimestamp(fileName: string): string {
         const timestamp = fileName.match('_[^_]*')![0].substring(1);
@@ -74,22 +89,22 @@ export class LocalHistoryProvider {
             }
 
             // Limits the number of entries based on the preference 'local-history.maxEntriesPerFile`.
-            items = items.slice(0, this.maxEntriesPerFile);
+            items = items.slice(0, this.localHistoryPreferenceService.maxEntriesPerFile);
             vscode.window.showQuickPick(items,
                 {
                     placeHolder: `Please select a local history revision for '${path.basename(textEditor.document.fileName)}'`,
                     matchOnDescription: true,
                     matchOnDetail: true
                 }).then((selection) => {
-                    // User made final selection
+                    // User made final selection.
                     if (!selection) {
                         return;
                     }
 
-                    // Get the file system path for the selection
+                    // Get the file system path for the selection.
                     const selectionFsPath = path.join(`${workspaceFolderPath}`, '.local-history', selection.label);
 
-                    // Show the diff between the active editor and the selected local history file
+                    // Show the diff between the active editor and the selected local history file.
                     this.displayDiff(vscode.Uri.file(selectionFsPath), textEditor.document.uri);
                 });
         }
@@ -99,7 +114,7 @@ export class LocalHistoryProvider {
     }
 
     /**
-     * Return the timestamp in the following format: 2020-04-06 10:25:50.123
+     * Return the timestamp in the following format: 2020-04-06 10:25:50.123.
      */
     private getCurrentTime(): string {
         let time = new Date();
@@ -108,7 +123,7 @@ export class LocalHistoryProvider {
     }
 
     /**
-     * Save the current context of the active editor
+     * Save the current context of the active editor.
      */
     public saveActiveEditorContext(document: vscode.TextDocument): void {
         const timestamp = this.getCurrentTime();
@@ -122,12 +137,12 @@ export class LocalHistoryProvider {
 
             const historyFolderPath = path.join(workspaceFolderPath, '.local-history');
 
-            // Create .local-history folder if it does not exist
+            // Create .local-history folder if it does not exist.
             if (!fs.existsSync(historyFolderPath)) {
                 fs.mkdirSync(historyFolderPath, { recursive: true });
             }
 
-            // Copy the content of the current active editor
+            // Copy the content of the current active editor.
             const fileBuffer = fs.readFileSync(document.fileName);
             const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
             fs.writeFileSync(historyFilePath, fileBuffer);
@@ -143,7 +158,7 @@ export class LocalHistoryProvider {
     }
 
     /**
-     * Compare the two revisions and show the diff between them
+     * Compare the two revisions and show the diff between them.
      */
     private displayDiff(previous: vscode.Uri, current: vscode.Uri): void {
         if (current && previous) {
@@ -152,17 +167,4 @@ export class LocalHistoryProvider {
         }
     }
 
-    /**
-     * Updates the value based on the current preference value set for 'local-history.maxEntriesPerFile'
-     */
-    public updateMaxEntriesPerFile(): void {
-        this.maxEntriesPerFile = this.getMaxResultsPerFile();
-    }
-
-    /**
-     * Get the number of max results for a given file based on the preference configuration.
-     */
-    private getMaxResultsPerFile(): number {
-        return vscode.workspace.getConfiguration().get(maxEntriesPerFile) as number;
-    }
 }
