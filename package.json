@@ -37,6 +37,16 @@
                     "when": "editorTextFocus"
                 }
             ]
+        },
+        "configuration": {
+            "title": "Local History",
+            "properties": {
+                "local-history.maxEntriesPerFile": {
+                    "type": "number",
+                    "default": 10,
+                    "description": "Controls the number of entries to keep for a given file"
+                }
+            }
         }
     },
     "scripts": {
