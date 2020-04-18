@@ -102,7 +102,7 @@ export class LocalHistoryManager {
                     }
 
                     // Get the file system path for the selection.
-                    const selectionFsPath = path.join(`${workspaceFolderPath}`, '.local-history', selection.label);
+                    const selectionFsPath = path.join(`${workspaceFolderPath}`, selection.description!);
 
                     // Show the diff between the active editor and the selected local history file.
                     this.displayDiff(vscode.Uri.file(selectionFsPath), textEditor.document.uri);
