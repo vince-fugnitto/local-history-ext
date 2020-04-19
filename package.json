@@ -28,6 +28,12 @@
             }
         ],
         "menus": {
+            "commandPalette": [
+                {
+                    "command": "local-history.viewAllForActiveEditor",
+                    "when": "editorIsOpen && resourceScheme == file"
+                }
+            ],
             "editor/context": [
                 {
                     "command": "local-history.viewAllForActiveEditor",
