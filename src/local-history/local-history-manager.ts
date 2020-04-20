@@ -140,6 +140,15 @@ export class LocalHistoryManager {
             const historyFilePath = path.join(hashedFolderPath, historyFileName);
             // Copy the content of the current active editor.
             const activeDocumentContent: string = await this.readFile(document.fileName);
+            const recentRevision = this.getMostRecentRevision(hashedFolderPath);
+            if (recentRevision) {
+                const latestEditorHistoryContent: string | undefined = recentRevision && await this.readFile(recentRevision);
+                if (latestEditorHistoryContent && activeDocumentContent === latestEditorHistoryContent) {
+                    fs.renameSync(recentRevision, historyFilePath);
+                    await this.writeFile(historyFilePath, activeDocumentContent);
+                    return;
+                }
+            }
             await this.writeFile(historyFilePath, activeDocumentContent);
         } catch (err) {
             console.warn('An error has occurred when saving the active editor content', err);
@@ -249,5 +258,28 @@ export class LocalHistoryManager {
                 console.warn(`An error has occurred when removing all the revision for ${path.basename(uri.fsPath)}`, err.message);
             }
         }
+    }
+    /**
+     * Gets the most recent revision of the file.
+     * If no previous revisions for the file are found, will return undefined. 
+     * @param directoryUri the directory uri which has the revisions of the targeted file.
+     */
+    private getMostRecentRevision(directoryUri: string): string | undefined {
+        // Collect the list of revisions sorted by the most recent modified time.
+        const revisions = fs.readdirSync(directoryUri).sort((a, b) => this.compareModificationTime(directoryUri, a, b));
+        return revisions[0] ? path.join(directoryUri, revisions[0]) : undefined;
+    }
+
+    /**
+     * Compare two revisions based on their modified time (in milliseconds).
+     * @param directoryUri the directory URI.
+     * @param a the first revision path.
+     * @param b the second revision path.
+     */
+    private compareModificationTime(directoryUri: string, a: string, b: string): number {
+        return (
+            fs.statSync(path.join(directoryUri, b)).mtimeMs -
+            fs.statSync(path.join(directoryUri, a)).mtimeMs
+        );
     }
 }
