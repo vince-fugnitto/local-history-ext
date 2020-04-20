@@ -167,4 +167,14 @@ export class LocalHistoryManager {
         }
     }
 
+    /**
+     * Revert the current active editor to its previous revision.
+     */
+    public revertActiveEditorToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): void {
+        if (current && previous) {
+            const fileBuffer = fs.readFileSync(previous.document.fileName);
+            fs.writeFileSync(current.document.fileName, fileBuffer);
+        }
+    }
+
 }
