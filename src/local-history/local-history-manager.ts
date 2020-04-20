@@ -140,11 +140,11 @@ export class LocalHistoryManager {
             const historyFilePath = path.join(hashedFolderPath, historyFileName);
             // Copy the content of the current active editor.
             const activeDocumentContent: string = await this.readFile(document.fileName);
-            const recentRevision = this.getMostRecentRevision(hashedFolderPath);
-            if (recentRevision) {
-                const latestEditorHistoryContent: string | undefined = recentRevision && await this.readFile(recentRevision);
+            const recentUpdatedFile = this.getMostRecentRevision(hashedFolderPath);
+            if (recentUpdatedFile) {
+                const latestEditorHistoryContent: string | undefined = recentUpdatedFile && await this.readFile(recentUpdatedFile);
                 if (latestEditorHistoryContent && activeDocumentContent === latestEditorHistoryContent) {
-                    fs.renameSync(recentRevision, historyFilePath);
+                    fs.renameSync(recentUpdatedFile, historyFilePath);
                     await this.writeFile(historyFilePath, activeDocumentContent);
                     return;
                 }
