@@ -25,6 +25,12 @@
                 "command": "local-history.viewAllForActiveEditor",
                 "title": "Local History: Active Editor",
                 "when": "editorTextFocus"
+            },
+            {
+                "command": "local-history.revertActiveEditorToPrevRevision",
+                "title": "Local History: Revert to Previous Revision",
+                "icon": "$(history)",
+                "when": "editorTextFocus"
             }
         ],
         "menus": {
@@ -32,6 +38,17 @@
                 {
                     "command": "local-history.viewAllForActiveEditor",
                     "when": "editorIsOpen && resourceScheme == file"
+                },
+                {
+                    "command": "local-history.revertActiveEditorToPrevRevision",
+                    "when": "editorIsOpen && resourceScheme == file"
+                }
+            ],
+            "editor/title": [
+                {
+                    "command": "local-history.revertActiveEditorToPrevRevision",
+                    "when": "textCompareEditorVisible && isInDiffEditor",
+                    "group": "navigation"
                 }
             ],
             "editor/context": [
