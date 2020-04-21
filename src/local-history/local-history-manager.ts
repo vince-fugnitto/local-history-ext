@@ -125,7 +125,7 @@ export class LocalHistoryManager {
     /**
      * Save the current context of the active editor.
      */
-    public saveActiveEditorContext(document: vscode.TextDocument): void {
+    public async saveActiveEditorContext(document: vscode.TextDocument): Promise<void> {
         const timestamp = this.getCurrentTime();
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const timestampForProperty = timestamp.substring(0, 19);
@@ -143,16 +143,15 @@ export class LocalHistoryManager {
             }
 
             // Copy the content of the current active editor.
-            const fileBuffer = fs.readFileSync(document.fileName);
+            const activeDocumentContent: string = await this.readFile(document.fileName);
             const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
-            fs.writeFileSync(historyFilePath, fileBuffer);
-
             const data: HistoryFileProperties = {
                 fileName: historyFileName,
                 timestamp: timestampForProperty,
                 uri: historyFilePath,
                 parentFileName: fileFullPath.base
             };
+            await this.writeFile(historyFilePath, activeDocumentContent);
             this.historyFiles.unshift(data);
         }
     }
@@ -170,11 +169,37 @@ export class LocalHistoryManager {
     /**
      * Revert the current active editor to its previous revision.
      */
-    public revertActiveEditorToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): void {
+    public async revertActiveEditorToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): Promise<void> {
         if (current && previous) {
-            const fileBuffer = fs.readFileSync(previous.document.fileName);
-            fs.writeFileSync(current.document.fileName, fileBuffer);
+            const fileContent = await this.readFile(previous.document.fileName);
+            await this.writeFile(current.document.fileName, fileContent);
         }
     }
 
+    /**
+     * Reads the contents of the file.
+     * @param uri: the uri of the file to be read.
+     * @param encoding: the required conversion of data received by the stream.
+     */
+    private readFile(uri: string, encoding = 'utf8'): Promise<string> {
+        const readStream = fs.createReadStream(uri, { encoding });
+        return new Promise((resolve) => {
+            let data = '';
+            readStream.on('data', chunk => data += chunk);
+            readStream.on('end', () => resolve(data));
+        });
+    }
+
+    /**
+     * Writes the content to a file.
+     * @param uri: the target uri for the new file.
+     * @param content: the data to be stored in the file
+     */
+    private writeFile(uri: string, content: string): Promise<string> {
+        const writeStream = fs.createWriteStream(uri);
+        return new Promise((resolve) => {
+            writeStream.on('open', () => writeStream.write(content));
+            writeStream.on('end', () => resolve());
+        });
+    }
 }
