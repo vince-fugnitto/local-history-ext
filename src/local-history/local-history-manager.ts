@@ -28,27 +28,35 @@ export class LocalHistoryManager {
     /**
     * Load existing entries on activation from local file system.
     */
-    public loadLocalHistory(): void {
+    public async loadLocalHistory(): Promise<void> {
 
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
             return;
         }
 
-        const workspaceFolderPath: string = vscode.workspace.workspaceFolders![0].uri.path;
-        const relativeSearchFolderPrefix = '/.local-history';
+        this.historyFiles = [];
 
-        fs.readdir(workspaceFolderPath + relativeSearchFolderPrefix, (err, files: string[]) => {
-            files.forEach((historyFileName: string) => {
-                const parentFileName = historyFileName.match('^[^_/]*')![0] + historyFileName.match('.[0-9a-z]+$')![0];
+        const workspaceFolderPath = vscode.workspace.workspaceFolders![0].uri;
+        const historyFolderPath = path.posix.join(workspaceFolderPath.fsPath, '.local-history');
+        const folderUri = workspaceFolderPath.with({ path: historyFolderPath });
+
+        // .local-history folder does not exist.
+        if (!fs.existsSync(historyFolderPath)) {
+            return;
+        }
+
+        for (const [fileName, type] of await vscode.workspace.fs.readDirectory(folderUri)) {
+            if (type === vscode.FileType.File) {
+                const parentFileName = fileName.match('^[^_/]*')![0] + fileName.match('.[0-9a-z]+$')![0];
                 const data: HistoryFileProperties = {
-                    fileName: historyFileName,
-                    timestamp: this.parseTimestamp(historyFileName),
-                    uri: path.join(workspaceFolderPath, '.local-history', historyFileName),
+                    fileName: fileName,
+                    timestamp: this.parseTimestamp(fileName),
+                    uri: path.join(folderUri.path, fileName),
                     parentFileName: parentFileName
                 };
                 this.historyFiles.unshift(data);
-            });
-        });
+            }
+        }
     }
 
     /**
@@ -143,7 +151,6 @@ export class LocalHistoryManager {
             }
 
             // Copy the content of the current active editor.
-            const activeDocumentContent: string = await this.readFile(document.fileName);
             const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
             const data: HistoryFileProperties = {
                 fileName: historyFileName,
@@ -151,8 +158,10 @@ export class LocalHistoryManager {
                 uri: historyFilePath,
                 parentFileName: fileFullPath.base
             };
-            await this.writeFile(historyFilePath, activeDocumentContent);
             this.historyFiles.unshift(data);
+
+            const activeDocumentContent: string = await this.readFile(document.fileName);
+            await this.writeFile(historyFilePath, activeDocumentContent);
         }
     }
 
