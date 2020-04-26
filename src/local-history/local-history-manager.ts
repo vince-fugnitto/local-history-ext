@@ -28,27 +28,35 @@ export class LocalHistoryManager {
     /**
     * Load existing entries on activation from local file system.
     */
-    public loadLocalHistory(): void {
+    public async loadLocalHistory(): Promise<void> {
 
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
             return;
         }
 
-        const workspaceFolderPath: string = vscode.workspace.workspaceFolders![0].uri.path;
-        const relativeSearchFolderPrefix = '/.local-history';
+        this.historyFiles = [];
 
-        fs.readdir(workspaceFolderPath + relativeSearchFolderPrefix, (err, files: string[]) => {
-            files.forEach((historyFileName: string) => {
-                const parentFileName = historyFileName.match('^[^_/]*')![0] + historyFileName.match('.[0-9a-z]+$')![0];
+        const workspaceFolderPath = vscode.workspace.workspaceFolders![0].uri;
+        const historyFolderPath = path.join(workspaceFolderPath.fsPath, '.local-history');
+        const folderUri = workspaceFolderPath.with({ path: historyFolderPath });
+
+        // .local-history folder does not exist.
+        if (!fs.existsSync(historyFolderPath)) {
+            return;
+        }
+
+        for (const [fileName, type] of await vscode.workspace.fs.readDirectory(folderUri)) {
+            if (type === vscode.FileType.File) {
+                const parentFileName = fileName.match('^[^_/]*')![0] + fileName.match('.[0-9a-z]+$')![0];
                 const data: HistoryFileProperties = {
-                    fileName: historyFileName,
-                    timestamp: this.parseTimestamp(historyFileName),
-                    uri: path.join(workspaceFolderPath, '.local-history', historyFileName),
+                    fileName: fileName,
+                    timestamp: this.parseTimestamp(fileName),
+                    uri: path.join(folderUri.path, fileName),
                     parentFileName: parentFileName
                 };
                 this.historyFiles.unshift(data);
-            });
-        });
+            }
+        }
     }
 
     /**
@@ -68,7 +76,7 @@ export class LocalHistoryManager {
     }
 
     /**
-     * View all history of the active editor
+     * View all history of the active editor.
      */
     public viewAllForActiveEditor(textEditor: vscode.TextEditor): void {
 
@@ -143,7 +151,6 @@ export class LocalHistoryManager {
             }
 
             // Copy the content of the current active editor.
-            const activeDocumentContent: string = await this.readFile(document.fileName);
             const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
             const data: HistoryFileProperties = {
                 fileName: historyFileName,
@@ -151,8 +158,10 @@ export class LocalHistoryManager {
                 uri: historyFilePath,
                 parentFileName: fileFullPath.base
             };
-            await this.writeFile(historyFilePath, activeDocumentContent);
             this.historyFiles.unshift(data);
+
+            const activeDocumentContent: string = await this.readFile(document.fileName);
+            await this.writeFile(historyFilePath, activeDocumentContent);
         }
     }
 
@@ -201,5 +210,37 @@ export class LocalHistoryManager {
             writeStream.on('open', () => writeStream.write(content));
             writeStream.on('end', () => resolve());
         });
+    }
+
+    /**
+     * Remove the active revision of a file.
+     */
+    public removeRevision(revision: vscode.TextEditor): void {
+        if (revision) {
+            vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(revision.document.fileName)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
+                if (selection === 'Delete') {
+                    const workspaceFolderPath = vscode.workspace.workspaceFolders![0].uri.fsPath;
+                    const revisionPath = path.join(workspaceFolderPath, '.local-history', path.basename(revision.document.fileName));
+
+                    fs.unlink(revisionPath, (err) => {
+                        if (err && err.code === 'ENOENT') {
+                            vscode.window.showInformationMessage('File is not a revision.');
+                            return;
+                        }
+                        else if (err) {
+                            vscode.window.showInformationMessage(err.message);
+                            return;
+                        }
+                        vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+
+                        // Reload the local history entries.
+
+                        vscode.window.showInformationMessage(`'${path.basename(revision.document.fileName)}' was deleted.`);
+
+                        this.loadLocalHistory();
+                    });
+                }
+            });
+        }
     }
 }

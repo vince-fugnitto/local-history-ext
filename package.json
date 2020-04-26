@@ -31,6 +31,12 @@
                 "title": "Local History: Revert to Previous Revision",
                 "icon": "$(history)",
                 "when": "editorTextFocus"
+            },
+            {
+                "command": "local-history.removeRevision",
+                "title": "Local History: Remove Revision",
+                "icon": "$(trash)",
+                "when": "textCompareEditorVisible && isInDiffEditor"
             }
         ],
         "menus": {
@@ -42,13 +48,22 @@
                 {
                     "command": "local-history.revertActiveEditorToPrevRevision",
                     "when": "editorIsOpen && resourceScheme == file"
+                },
+                {
+                    "command": "local-history.removeRevision",
+                    "when": "editorIsOpen && resourceScheme == file && textCompareEditorVisible && isInDiffEditor"
                 }
             ],
             "editor/title": [
                 {
                     "command": "local-history.revertActiveEditorToPrevRevision",
                     "when": "textCompareEditorVisible && isInDiffEditor",
-                    "group": "navigation"
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "local-history.removeRevision",
+                    "when": "textCompareEditorVisible && isInDiffEditor",
+                    "group": "navigation@2"
                 }
             ],
             "editor/context": [

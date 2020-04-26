@@ -17,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Command which reverts the active editor to its previous revision.
     disposable.push(
         vscode.commands.registerTextEditorCommand('local-history.revertActiveEditorToPrevRevision', () => {
             const editors = vscode.window.visibleTextEditors;
@@ -26,6 +27,19 @@ export function activate(context: vscode.ExtensionContext) {
                         provider.revertActiveEditorToPrevRevision(editors[0], editors[1]);
                     }
                 });
+            }
+            else if (editors && editors.length === 1) {
+                provider.viewAllForActiveEditor(vscode.window.activeTextEditor!);
+            }
+        })
+    );
+
+    // Command which remove the active revision of a file.
+    disposable.push(
+        vscode.commands.registerTextEditorCommand('local-history.removeRevision', () => {
+            const editors = vscode.window.visibleTextEditors;
+            if (editors && editors.length > 0) {
+                provider.removeRevision(editors[0]);
             }
         })
     );
