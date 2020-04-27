@@ -45,16 +45,27 @@ export class LocalHistoryManager {
             return;
         }
 
-        for (const [fileName, type] of await vscode.workspace.fs.readDirectory(folderUri)) {
+        await this.readDirRec(folderUri);
+    }
+
+    /**
+    * Read a directory recursively.
+    */
+    private async readDirRec(folderUri: vscode.Uri): Promise<void> {
+        for (const [name, type] of await vscode.workspace.fs.readDirectory(folderUri)) {
             if (type === vscode.FileType.File) {
-                const parentFileName = fileName.match('^[^_/]*')![0] + fileName.match('.[0-9a-z]+$')![0];
+                const parentFileName = name.match('^[^_/]*')![0] + name.match('.[0-9a-z]+$')![0];
                 const data: HistoryFileProperties = {
-                    fileName: fileName,
-                    timestamp: this.parseTimestamp(fileName),
-                    uri: path.join(folderUri.path, fileName),
+                    fileName: name,
+                    timestamp: this.parseTimestamp(name),
+                    uri: path.join(folderUri.path, name),
                     parentFileName: parentFileName
                 };
                 this.historyFiles.unshift(data);
+            }
+            else if (type === vscode.FileType.Directory) {
+                const childFolderUri = folderUri.with({ path: path.join(folderUri.fsPath, name) });
+                this.readDirRec(childFolderUri);
             }
         }
     }
@@ -82,17 +93,19 @@ export class LocalHistoryManager {
 
         if (vscode.workspace.getWorkspaceFolder(textEditor.document.uri) !== undefined) {
             const workspaceFolderPath: string = vscode.workspace.getWorkspaceFolder(textEditor.document.uri)!.uri.fsPath;
-            const activeEditor = path.parse(textEditor.document.fileName);
+            const relativePath = vscode.workspace.asRelativePath(textEditor.document.fileName, false).replace(/\//g, path.sep);
 
+            // Populate the quickPick menu with local history entries for the active editor.
             let items: vscode.QuickPickItem[] = this.historyFiles.
-                filter(item => item.parentFileName === (activeEditor.base)).
+                filter(item => (item.parentFileName === (path.basename(relativePath)) &&
+                    (path.dirname(item.uri.split('.local-history' + path.sep)[1])) === path.dirname(relativePath))).
                 map(item => ({
                     label: `$(calendar) ${item.timestamp}`,
                     description: vscode.workspace.asRelativePath(item.uri)
                 }));
 
             if (items.length === 0) {
-                vscode.window.showInformationMessage(`No local history file found for '${activeEditor.base}'`);
+                vscode.window.showInformationMessage(`No local history file found for '${path.basename(relativePath)}'`);
                 return;
             }
 
@@ -143,15 +156,26 @@ export class LocalHistoryManager {
         if (vscode.workspace.getWorkspaceFolder(document.uri) !== undefined) {
             const workspaceFolderPath: string = vscode.workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
 
-            const historyFolderPath = path.join(workspaceFolderPath, '.local-history');
+            // Get the directory name of the relative path for the active editor.
+            const relativePathDirName = path.dirname(vscode.workspace.asRelativePath(document.fileName, false).replace(/\//g, path.sep));
 
-            // Create .local-history folder if it does not exist.
-            if (!fs.existsSync(historyFolderPath)) {
-                fs.mkdirSync(historyFolderPath, { recursive: true });
+            // Create the directory name for the local history file.
+            let historyFileDirName;
+            if (relativePathDirName.length > 0) {
+                historyFileDirName = path.join(workspaceFolderPath, '.local-history', relativePathDirName);
+            } else {
+                historyFileDirName = path.join(workspaceFolderPath, '.local-history');
             }
 
+            // Create parent folders inside .local-history if they do not exist.
+            if (!fs.existsSync(historyFileDirName)) {
+                fs.mkdirSync(historyFileDirName, { recursive: true });
+            }
+
+            // Create full path (including file name) for the local history file.
+            const historyFilePath = path.join(historyFileDirName, historyFileName);
+
             // Copy the content of the current active editor.
-            const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
             const data: HistoryFileProperties = {
                 fileName: historyFileName,
                 timestamp: timestampForProperty,
@@ -222,6 +246,7 @@ export class LocalHistoryManager {
                     const workspaceFolderPath = vscode.workspace.workspaceFolders![0].uri.fsPath;
                     const revisionPath = path.join(workspaceFolderPath, '.local-history', path.basename(revision.document.fileName));
 
+                    // Delete the revision.
                     fs.unlink(revisionPath, (err) => {
                         if (err && err.code === 'ENOENT') {
                             vscode.window.showInformationMessage('File is not a revision.');
@@ -232,11 +257,9 @@ export class LocalHistoryManager {
                             return;
                         }
                         vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-
-                        // Reload the local history entries.
-
                         vscode.window.showInformationMessage(`'${path.basename(revision.document.fileName)}' was deleted.`);
 
+                        // Reload the local history entries.
                         this.loadLocalHistory();
                     });
                 }
