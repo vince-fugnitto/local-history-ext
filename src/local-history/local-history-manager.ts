@@ -2,6 +2,15 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { LocalHistoryPreferenceService } from './local-history-preference-service';
+import * as os from 'os';
+import * as crypto from 'crypto';
+
+function checksum(str: string, algorithm: string = 'md5') {
+    return crypto
+        .createHash(algorithm)
+        .update(str, 'utf8')
+        .digest('hex');
+}
 
 export interface HistoryFileProperties {
     fileName: string;
@@ -141,17 +150,19 @@ export class LocalHistoryManager {
         const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
 
         if (vscode.workspace.getWorkspaceFolder(document.uri) !== undefined) {
-            const workspaceFolderPath: string = vscode.workspace.getWorkspaceFolder(document.uri)!.uri.fsPath;
-
-            const historyFolderPath = path.join(workspaceFolderPath, '.local-history');
-
+            const userHome = path.join(os.homedir(), '.local-history');
             // Create .local-history folder if it does not exist.
-            if (!fs.existsSync(historyFolderPath)) {
-                fs.mkdirSync(historyFolderPath, { recursive: true });
+            if (!fs.existsSync(userHome)) {
+                fs.mkdirSync(userHome, { recursive: true });
             }
+            const hashedUri = checksum(document.fileName);
+            const hashedFolderPath = path.join(userHome, hashedUri);
 
+            if (!fs.existsSync(hashedFolderPath)) {
+                fs.mkdirSync(hashedFolderPath, { recursive: true });
+            }
             // Copy the content of the current active editor.
-            const historyFilePath = path.join(workspaceFolderPath, '.local-history', historyFileName);
+            const historyFilePath = path.join(hashedFolderPath, historyFileName);
             const data: HistoryFileProperties = {
                 fileName: historyFileName,
                 timestamp: timestampForProperty,
@@ -159,9 +170,12 @@ export class LocalHistoryManager {
                 parentFileName: fileFullPath.base
             };
             this.historyFiles.unshift(data);
-
-            const activeDocumentContent: string = await this.readFile(document.fileName);
-            await this.writeFile(historyFilePath, activeDocumentContent);
+            try {
+                const activeDocumentContent: string = await this.readFile(document.fileName);
+                await this.writeFile(historyFilePath, activeDocumentContent);
+            } catch (err) {
+                console.log(err);
+            }
         }
     }
 
