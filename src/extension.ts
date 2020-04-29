@@ -28,9 +28,6 @@ export function activate(context: vscode.ExtensionContext) {
                     }
                 });
             }
-            else if (editors && editors.length === 1) {
-                provider.viewAllForActiveEditor(vscode.window.activeTextEditor!);
-            }
         })
     );
 
