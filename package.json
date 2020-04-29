@@ -30,7 +30,7 @@
                 "command": "local-history.revertActiveEditorToPrevRevision",
                 "title": "Local History: Revert to Previous Revision",
                 "icon": "$(history)",
-                "when": "editorTextFocus"
+                "when": "textCompareEditorVisible && isInDiffEditor"
             },
             {
                 "command": "local-history.removeRevision",
@@ -47,11 +47,11 @@
                 },
                 {
                     "command": "local-history.revertActiveEditorToPrevRevision",
-                    "when": "editorIsOpen && resourceScheme == file"
+                    "when": "false"
                 },
                 {
                     "command": "local-history.removeRevision",
-                    "when": "editorIsOpen && resourceScheme == file && textCompareEditorVisible && isInDiffEditor"
+                    "when": "false"
                 }
             ],
             "editor/title": [
