@@ -12,19 +12,19 @@ export function activate(context: vscode.ExtensionContext) {
 
     disposable.push(
         // Displays the local history for the currently active editor.
-        vscode.commands.registerTextEditorCommand('local-history.viewAllForActiveEditor', () => {
-            provider.viewAllForActiveEditor(vscode.window.activeTextEditor!);
+        vscode.commands.registerTextEditorCommand('local-history.viewHistory', () => {
+            provider.viewHistory(vscode.window.activeTextEditor!);
         })
     );
 
     // Command which reverts the active editor to its previous revision.
     disposable.push(
-        vscode.commands.registerTextEditorCommand('local-history.revertActiveEditorToPrevRevision', () => {
+        vscode.commands.registerTextEditorCommand('local-history.revertToPrevRevision', () => {
             const editors = vscode.window.visibleTextEditors;
             if (editors && editors.length === 2) {
                 vscode.window.showWarningMessage(`Are you sure you want to revert '${path.basename(editors[1].document.fileName)}' to its previous state?`, { modal: true }, 'Revert').then((selection) => {
                     if (selection === 'Revert') {
-                        provider.revertActiveEditorToPrevRevision(editors[0], editors[1]);
+                        provider.revertToPrevRevision(editors[0], editors[1]);
                     }
                 });
             }
@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
     disposable.push(
         vscode.commands.registerTextEditorCommand('local-history.removeRevision', () => {
             const editors = vscode.window.visibleTextEditors;
-            if (editors && editors.length > 0) {
+            if (editors && editors.length === 2) {
                 provider.removeRevision(editors[0]);
             }
         })

@@ -22,12 +22,12 @@
     "contributes": {
         "commands": [
             {
-                "command": "local-history.viewAllForActiveEditor",
+                "command": "local-history.viewHistory",
                 "title": "Local History: Active Editor",
                 "when": "editorTextFocus"
             },
             {
-                "command": "local-history.revertActiveEditorToPrevRevision",
+                "command": "local-history.revertToPrevRevision",
                 "title": "Local History: Revert to Previous Revision",
                 "icon": "$(history)",
                 "when": "textCompareEditorVisible && isInDiffEditor"
@@ -42,11 +42,11 @@
         "menus": {
             "commandPalette": [
                 {
-                    "command": "local-history.viewAllForActiveEditor",
+                    "command": "local-history.viewHistory",
                     "when": "editorIsOpen && resourceScheme == file"
                 },
                 {
-                    "command": "local-history.revertActiveEditorToPrevRevision",
+                    "command": "local-history.revertToPrevRevision",
                     "when": "false"
                 },
                 {
@@ -56,7 +56,7 @@
             ],
             "editor/title": [
                 {
-                    "command": "local-history.revertActiveEditorToPrevRevision",
+                    "command": "local-history.revertToPrevRevision",
                     "when": "textCompareEditorVisible && isInDiffEditor",
                     "group": "navigation@1"
                 },
@@ -68,7 +68,7 @@
             ],
             "editor/context": [
                 {
-                    "command": "local-history.viewAllForActiveEditor",
+                    "command": "local-history.viewHistory",
                     "when": "editorTextFocus"
                 }
             ]
