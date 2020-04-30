@@ -20,36 +20,40 @@ export interface HistoryFileProperties {
 
 export class LocalHistoryManager {
 
-    private historyFilesForActiveEditor: any[] = [];
+    private historyFilesForActiveEditor: HistoryFileProperties[] = [];
     private localHistoryPreferenceService: LocalHistoryPreferenceService = new LocalHistoryPreferenceService();
 
     constructor() {
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
-            this.saveActiveEditorContext(document);
+            this.saveEditorContext(document);
         });
     }
 
     /**
-    * Load existing entries on activation from local file system.
-    */
-    public async loadLocalHistoryActiveEditor(hashedFolderPath: string): Promise<void> {
+     * Load existing entries on activation from local file system.
+     */
+    public async loadHistory(hashedFolderPath: string): Promise<void> {
 
         if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
             return;
         }
 
         this.historyFilesForActiveEditor = [];
+        const hashedFolderUri = vscode.Uri.file(hashedFolderPath);
 
-        const pathInVscodeUri = vscode.Uri.file(hashedFolderPath);
-        for (const [fileName, type] of await vscode.workspace.fs.readDirectory(pathInVscodeUri)) {
-            if (type === vscode.FileType.File) {
-                const data: HistoryFileProperties = {
-                    fileName: fileName,
-                    timestamp: this.parseTimestamp(fileName),
-                    uri: path.join(hashedFolderPath, fileName),
-                };
-                this.historyFilesForActiveEditor.unshift(data);
+        try {
+            for (const [fileName, type] of await vscode.workspace.fs.readDirectory(hashedFolderUri)) {
+                if (type === vscode.FileType.File) {
+                    const data: HistoryFileProperties = {
+                        fileName: fileName,
+                        timestamp: this.parseTimestamp(fileName),
+                        uri: path.join(hashedFolderPath, fileName),
+                    };
+                    this.historyFilesForActiveEditor.unshift(data);
+                }
             }
+        } catch (err) {
+            console.warn('An error has occurred when reading the .local-history directory', err);
         }
     }
 
@@ -72,21 +76,20 @@ export class LocalHistoryManager {
     /**
      * View all history of the active editor.
      */
-    public viewAllForActiveEditor(textEditor: vscode.TextEditor): void {
+    public viewHistory(editor: vscode.TextEditor): void {
 
-        if (vscode.workspace.getWorkspaceFolder(textEditor.document.uri) !== undefined) {
-            const hashedEditorPath = checksum(textEditor.document.fileName);
-            const localHistoryFolderPath = path.join(os.homedir(), '.local-history');
-            const hashedFolderPath = path.join(localHistoryFolderPath, hashedEditorPath);
+        if (vscode.workspace.getWorkspaceFolder(editor.document.uri) !== undefined) {
+            const hashedEditorPath = checksum(editor.document.fileName);
+            const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
 
-            this.loadLocalHistoryActiveEditor(hashedFolderPath).then(() => {
+            this.loadHistory(hashedFolderPath).then(() => {
                 let items: vscode.QuickPickItem[] = this.historyFilesForActiveEditor.map(item => ({
                     label: `$(calendar) ${item.timestamp}`,
                     description: path.basename(item.uri)
                 }));
 
                 if (items.length === 0) {
-                    vscode.window.showInformationMessage(`No local history file found for '${path.basename(textEditor.document.fileName)}'`);
+                    vscode.window.showInformationMessage(`No local history file found for '${path.basename(editor.document.fileName)}'`);
                     return;
                 }
 
@@ -94,7 +97,7 @@ export class LocalHistoryManager {
                 items = items.slice(0, this.localHistoryPreferenceService.maxEntriesPerFile);
                 vscode.window.showQuickPick(items,
                     {
-                        placeHolder: `Please select a local history revision for '${path.basename(textEditor.document.fileName)}'`,
+                        placeHolder: `Please select a local history revision for '${path.basename(editor.document.fileName)}'`,
                         matchOnDescription: true,
                         matchOnDetail: true
                     }).then((selection) => {
@@ -104,10 +107,10 @@ export class LocalHistoryManager {
                         }
 
                         // Get the file system path for the selection.
-                        const selectionFsPath = path.join(`${hashedFolderPath}`, selection.description!);
+                        const selectionFsPath = path.join(hashedFolderPath, selection.description!);
 
                         // Show the diff between the active editor and the selected local history file.
-                        this.displayDiff(vscode.Uri.file(selectionFsPath), textEditor.document.uri);
+                        this.displayDiff(vscode.Uri.file(selectionFsPath), editor.document.uri);
                     });
             });
         }
@@ -128,16 +131,15 @@ export class LocalHistoryManager {
     /**
      * Save the current context of the active editor.
      */
-    public async saveActiveEditorContext(document: vscode.TextDocument): Promise<void> {
+    public async saveEditorContext(document: vscode.TextDocument): Promise<void> {
         const timestamp = this.getCurrentTime();
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
         const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
 
         if (vscode.workspace.getWorkspaceFolder(document.uri) !== undefined) {
-            const localHistoryFolderPath = path.join(os.homedir(), '.local-history');
             const hashedEditorPath = checksum(document.fileName);
-            const hashedFolderPath = path.join(localHistoryFolderPath, hashedEditorPath);
+            const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
 
             // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
             if (!fs.existsSync(hashedFolderPath)) {
@@ -150,7 +152,7 @@ export class LocalHistoryManager {
                 const activeDocumentContent: string = await this.readFile(document.fileName);
                 await this.writeFile(historyFilePath, activeDocumentContent);
             } catch (err) {
-                console.log(err);
+                console.warn('An error has occurred when saving the active editor content', err);
             }
         }
     }
@@ -168,10 +170,14 @@ export class LocalHistoryManager {
     /**
      * Revert the current active editor to its previous revision.
      */
-    public async revertActiveEditorToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): Promise<void> {
+    public async revertToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): Promise<void> {
         if (current && previous) {
-            const fileContent = await this.readFile(previous.document.fileName);
-            await this.writeFile(current.document.fileName, fileContent);
+            try {
+                const fileContent = await this.readFile(previous.document.fileName);
+                await this.writeFile(current.document.fileName, fileContent);
+            } catch (err) {
+                console.warn('An error has occurred when reverting to previous revision', err);
+            }
         }
     }
 
@@ -209,22 +215,14 @@ export class LocalHistoryManager {
         if (revision) {
             vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(revision.document.fileName)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
                 if (selection === 'Delete') {
-                    const workspaceFolderPath = vscode.workspace.workspaceFolders![0].uri.fsPath;
-                    const revisionPath = path.join(workspaceFolderPath, '.local-history', path.basename(revision.document.fileName));
 
-                    fs.unlink(revisionPath, (err) => {
-                        if (err && err.code === 'ENOENT') {
-                            vscode.window.showInformationMessage('File is not a revision.');
-                            return;
-                        }
-                        else if (err) {
-                            vscode.window.showInformationMessage(err.message);
+                    // Remove the revision.
+                    fs.unlink(revision.document.fileName, (err) => {
+                        if (err) {
+                            console.warn('An error has occurred when removing the revision', err.message);
                             return;
                         }
                         vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-
-                        // Reload the local history entries.
-
                         vscode.window.showInformationMessage(`'${path.basename(revision.document.fileName)}' was deleted.`);
                     });
                 }
