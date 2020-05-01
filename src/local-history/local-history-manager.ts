@@ -34,10 +34,6 @@ export class LocalHistoryManager {
      */
     public async loadHistory(hashedFolderPath: string): Promise<void> {
 
-        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
-            return;
-        }
-
         this.historyFilesForActiveEditor = [];
         const hashedFolderUri = vscode.Uri.file(hashedFolderPath);
 
@@ -132,24 +128,21 @@ export class LocalHistoryManager {
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
         const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
+        const hashedEditorPath = checksum(document.fileName);
+        const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
 
-        if (vscode.workspace.getWorkspaceFolder(document.uri) !== undefined) {
-            const hashedEditorPath = checksum(document.fileName);
-            const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
+        // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
+        if (!fs.existsSync(hashedFolderPath)) {
+            fs.mkdirSync(hashedFolderPath, { recursive: true });
+        }
 
-            // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
-            if (!fs.existsSync(hashedFolderPath)) {
-                fs.mkdirSync(hashedFolderPath, { recursive: true });
-            }
-
-            try {
-                const historyFilePath = path.join(hashedFolderPath, historyFileName);
-                // Copy the content of the current active editor.
-                const activeDocumentContent: string = await this.readFile(document.fileName);
-                await this.writeFile(historyFilePath, activeDocumentContent);
-            } catch (err) {
-                console.warn('An error has occurred when saving the active editor content', err);
-            }
+        try {
+            const historyFilePath = path.join(hashedFolderPath, historyFileName);
+            // Copy the content of the current active editor.
+            const activeDocumentContent: string = await this.readFile(document.fileName);
+            await this.writeFile(historyFilePath, activeDocumentContent);
+        } catch (err) {
+            console.warn('An error has occurred when saving the active editor content', err);
         }
     }
 
