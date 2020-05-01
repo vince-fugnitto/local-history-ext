@@ -37,6 +37,10 @@
                 "title": "Local History: Remove Revision",
                 "icon": "$(trash)",
                 "when": "textCompareEditorVisible && isInDiffEditor"
+            },
+            {
+                "command": "local-history.clearHistory",
+                "title": "Local History: Clear History Active File"
             }
         ],
         "menus": {
@@ -52,6 +56,10 @@
                 {
                     "command": "local-history.removeRevision",
                     "when": "false"
+                },
+                {
+                    "command": "local-history.clearHistory",
+                    "when": "editorIsOpen && resourceScheme == file"
                 }
             ],
             "editor/title": [
@@ -70,6 +78,17 @@
                 {
                     "command": "local-history.viewHistory",
                     "when": "editorTextFocus"
+                },
+                {
+                    "command": "local-history.clearHistory",
+                    "when": "editorTextFocus"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "local-history.clearHistory",
+                    "when": "!explorerResourceIsFolder",
+                    "group": "LocalHistory@1"
                 }
             ]
         },
