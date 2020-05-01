@@ -229,4 +229,36 @@ export class LocalHistoryManager {
             });
         }
     }
+
+    /**
+     * Removes all revisions of the active file.
+     * @param uri: the uri of the active file.
+     */
+    public clearHistory(uri: vscode.Uri): void {
+        if (uri) {
+            const hashedEditorPath = checksum(uri.fsPath);
+            const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
+
+            // Check if local history exists for the active file
+            if (!fs.existsSync(hashedFolderPath)) {
+                vscode.window.showInformationMessage(`No local history file found for '${path.basename(uri.fsPath)}'`);
+                return;
+            }
+
+            try {
+                vscode.window.showWarningMessage(`Are you sure you want to delete all revisions for '${path.basename(uri.fsPath)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
+                    if (selection === 'Delete') {
+                        const files = fs.readdirSync(hashedFolderPath);
+                        for (const file of files) {
+                            fs.unlinkSync(path.join(hashedFolderPath, file));
+                        }
+                        fs.rmdirSync(hashedFolderPath);
+                        vscode.window.showInformationMessage(`All revisions for '${path.basename(uri.fsPath)}' were deleted.`);
+                    }
+                });
+            } catch (err) {
+                console.warn(`An error has occurred when removing all the revision for ${path.basename(uri.fsPath)}`, err.message);
+            }
+        }
+    }
 }

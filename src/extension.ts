@@ -31,13 +31,23 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Command which remove the active revision of a file.
+    // Command which removes the active revision of a file.
     disposable.push(
         vscode.commands.registerTextEditorCommand('local-history.removeRevision', () => {
             const editors = vscode.window.visibleTextEditors;
             if (editors && editors.length === 2) {
                 provider.removeRevision(editors[0]);
             }
+        })
+    );
+
+    // Command which removes all revisions of the active file.
+    disposable.push(
+        vscode.commands.registerCommand('local-history.clearHistory', (uri: vscode.Uri) => {
+            if (uri === undefined) {
+                uri = vscode.window.activeTextEditor!.document.uri;
+            }
+            provider.clearHistory(uri);
         })
     );
 
