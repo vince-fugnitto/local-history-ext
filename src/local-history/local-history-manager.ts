@@ -27,6 +27,10 @@ export class LocalHistoryManager {
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
             this.saveEditorContext(document);
         });
+
+        vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
+            this.createFirstRevision(event.document);
+        });
     }
 
     /**
@@ -130,11 +134,6 @@ export class LocalHistoryManager {
         const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
         const hashedEditorPath = checksum(document.fileName);
         const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
-
-        // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
-        if (!fs.existsSync(hashedFolderPath)) {
-            fs.mkdirSync(hashedFolderPath, { recursive: true });
-        }
 
         try {
             const historyFilePath = path.join(hashedFolderPath, historyFileName);
@@ -281,5 +280,23 @@ export class LocalHistoryManager {
             fs.statSync(path.join(directoryUri, b)).mtimeMs -
             fs.statSync(path.join(directoryUri, a)).mtimeMs
         );
+    }
+
+    /**
+     * Create the first revision for an active editor without local history.
+     */
+    private createFirstRevision(document: vscode.TextDocument): void {
+        const hashedEditorPath = checksum(document.fileName);
+        const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
+
+        // Check if local history exists for the active editor
+        if (fs.existsSync(hashedFolderPath)) {
+            return;
+        }
+
+        // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
+        fs.mkdirSync(hashedFolderPath, { recursive: true });
+        this.saveEditorContext(document);
+
     }
 }
