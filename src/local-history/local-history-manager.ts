@@ -209,19 +209,14 @@ export class LocalHistoryManager {
      */
     public removeRevision(revision: vscode.TextEditor): void {
         if (revision) {
-            vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(revision.document.fileName)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
-                if (selection === 'Delete') {
-
-                    // Remove the revision.
-                    fs.unlink(revision.document.fileName, (err) => {
-                        if (err) {
-                            console.warn('An error has occurred when removing the revision', err.message);
-                            return;
-                        }
-                        vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-                        vscode.window.showInformationMessage(`'${path.basename(revision.document.fileName)}' was deleted.`);
-                    });
+            // Remove the revision.
+            fs.unlink(revision.document.fileName, (err) => {
+                if (err) {
+                    console.warn('An error has occurred when removing the revision', err.message);
+                    return;
                 }
+                vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                vscode.window.showInformationMessage(`'${path.basename(revision.document.fileName)}' was deleted.`);
             });
         }
     }

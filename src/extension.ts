@@ -40,7 +40,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerTextEditorCommand('local-history.removeRevision', () => {
             const editors = vscode.window.visibleTextEditors;
             if (editors && editors.length === 2) {
-                provider.removeRevision(editors[0]);
+                vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(editors[0].document.fileName)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
+                    if (selection === 'Delete') {
+                        provider.removeRevision(editors[0]);
+                    }
+                });
             }
         })
     );

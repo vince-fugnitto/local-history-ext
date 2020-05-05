@@ -64,12 +64,12 @@
             "editor/title": [
                 {
                     "command": "local-history.revertToPrevRevision",
-                    "when": "textCompareEditorVisible && isInDiffEditor",
+                    "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
                     "group": "navigation@1"
                 },
                 {
                     "command": "local-history.removeRevision",
-                    "when": "textCompareEditorVisible && isInDiffEditor",
+                    "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
                     "group": "navigation@2"
                 }
             ],
