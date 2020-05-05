@@ -105,6 +105,11 @@
                     "type": "number",
                     "default": 10,
                     "description": "Controls the number of entries to keep for a given file"
+                },
+                "local-history.autoSaveDelay": {
+                    "type": "number",
+                    "default": 5000,
+                    "description": "Controls delay in auto saving of local history in milliseconds."
                 }
             }
         }

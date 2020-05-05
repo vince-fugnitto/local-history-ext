@@ -143,14 +143,19 @@ export class LocalHistoryManager {
             const recentUpdatedFile = this.getMostRecentRevision(hashedFolderPath);
             if (recentUpdatedFile) {
                 const latestEditorHistoryContent: string | undefined = recentUpdatedFile && await this.readFile(recentUpdatedFile);
-                if (latestEditorHistoryContent && activeDocumentContent === latestEditorHistoryContent) {
+                if (this.historyFileTimeDifference(document) && latestEditorHistoryContent && !(activeDocumentContent === latestEditorHistoryContent)) {
+                    await this.writeFile(historyFilePath, activeDocumentContent);
+                    return;
+                }
+                else {
                     fs.renameSync(recentUpdatedFile, historyFilePath);
                     await this.writeFile(historyFilePath, activeDocumentContent);
                     return;
                 }
             }
             await this.writeFile(historyFilePath, activeDocumentContent);
-        } catch (err) {
+        }
+        catch (err) {
             console.warn('An error has occurred when saving the active editor content', err);
         }
     }
@@ -276,5 +281,24 @@ export class LocalHistoryManager {
             fs.statSync(path.join(directoryUri, b)).mtimeMs -
             fs.statSync(path.join(directoryUri, a)).mtimeMs
         );
+    }
+
+    /**
+     * Checks to see if the elapsed time from last revision to present is greater than the preference time.
+     * @param document Represent the active text document. 
+     */
+    private historyFileTimeDifference(document: vscode.TextDocument): boolean {
+        const currentTime = Date.now();
+        const hashedFileName = checksum(document.fileName);
+        const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedFileName);
+        const recentRevision = this.getMostRecentRevision(hashedFolderPath);
+        if (recentRevision) {
+            const recentRevisionTime = fs.statSync(recentRevision).mtimeMs;
+            const timeDifference = currentTime - recentRevisionTime;
+            if (timeDifference > this.localHistoryPreferenceService.autoSaveDelay) {
+                return true;
+            }
+        }
+        return false;
     }
 }
