@@ -23,8 +23,7 @@
         "commands": [
             {
                 "command": "local-history.viewHistory",
-                "title": "Local History: Active Editor",
-                "when": "editorTextFocus"
+                "title": "Local History: View History"
             },
             {
                 "command": "local-history.revertToPrevRevision",
@@ -40,7 +39,7 @@
             },
             {
                 "command": "local-history.clearHistory",
-                "title": "Local History: Clear History Active File"
+                "title": "Local History: Clear History"
             }
         ],
         "menus": {
@@ -77,18 +76,25 @@
             "editor/context": [
                 {
                     "command": "local-history.viewHistory",
-                    "when": "editorTextFocus"
+                    "when": "editorTextFocus",
+                    "group": "LocalHistory@1"
                 },
                 {
                     "command": "local-history.clearHistory",
-                    "when": "editorTextFocus"
+                    "when": "editorTextFocus",
+                    "group": "LocalHistory@2"
                 }
             ],
             "explorer/context": [
                 {
-                    "command": "local-history.clearHistory",
+                    "command": "local-history.viewHistory",
                     "when": "!explorerResourceIsFolder",
                     "group": "LocalHistory@1"
+                },
+                {
+                    "command": "local-history.clearHistory",
+                    "when": "!explorerResourceIsFolder",
+                    "group": "LocalHistory@2"
                 }
             ]
         },
