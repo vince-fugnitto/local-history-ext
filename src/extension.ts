@@ -11,9 +11,13 @@ export function activate(context: vscode.ExtensionContext) {
     const provider: LocalHistoryManager = new LocalHistoryManager();
 
     disposable.push(
-        // Displays the local history for the currently active editor.
-        vscode.commands.registerTextEditorCommand('local-history.viewHistory', () => {
-            provider.viewHistory(vscode.window.activeTextEditor!);
+        // Displays the local history of the active file.
+        vscode.commands.registerCommand('local-history.viewHistory', (uri: vscode.Uri) => {
+            if (uri === undefined) {
+                uri = vscode.window.activeTextEditor!.document.uri;
+            }
+            provider.viewHistory(uri);
+
         })
     );
 

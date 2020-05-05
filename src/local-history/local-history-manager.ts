@@ -74,12 +74,11 @@ export class LocalHistoryManager {
     }
 
     /**
-     * View all history of the active editor.
+     * View all local history of the active file.
      */
-    public viewHistory(editor: vscode.TextEditor): void {
-
-        if (vscode.workspace.getWorkspaceFolder(editor.document.uri) !== undefined) {
-            const hashedEditorPath = checksum(editor.document.fileName);
+    public viewHistory(uri: vscode.Uri): void {
+        if (uri) {
+            const hashedEditorPath = checksum(uri.fsPath);
             const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
 
             this.loadHistory(hashedFolderPath).then(() => {
@@ -89,7 +88,7 @@ export class LocalHistoryManager {
                 }));
 
                 if (items.length === 0) {
-                    vscode.window.showInformationMessage(`No local history file found for '${path.basename(editor.document.fileName)}'`);
+                    vscode.window.showInformationMessage(`No local history file found for '${path.basename(uri.fsPath)}'`);
                     return;
                 }
 
@@ -97,7 +96,7 @@ export class LocalHistoryManager {
                 items = items.slice(0, this.localHistoryPreferenceService.maxEntriesPerFile);
                 vscode.window.showQuickPick(items,
                     {
-                        placeHolder: `Please select a local history revision for '${path.basename(editor.document.fileName)}'`,
+                        placeHolder: `Please select a local history revision for '${path.basename(uri.fsPath)}'`,
                         matchOnDescription: true,
                         matchOnDetail: true
                     }).then((selection) => {
@@ -109,13 +108,10 @@ export class LocalHistoryManager {
                         // Get the file system path for the selection.
                         const selectionFsPath = path.join(hashedFolderPath, selection.description!);
 
-                        // Show the diff between the active editor and the selected local history file.
-                        this.displayDiff(vscode.Uri.file(selectionFsPath), editor.document.uri);
+                        // Show the diff between the active file and the selected local history file.
+                        this.displayDiff(vscode.Uri.file(selectionFsPath), uri);
                     });
             });
-        }
-        else {
-            vscode.window.showInformationMessage('File does not belong to a workspace. Please save.');
         }
     }
 
