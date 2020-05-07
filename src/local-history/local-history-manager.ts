@@ -29,6 +29,10 @@ export class LocalHistoryManager {
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
             this.saveEditorContext(document);
         });
+
+        vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
+            this.checkPermission(event.document);
+        });
     }
 
     /**
@@ -144,16 +148,16 @@ export class LocalHistoryManager {
             if (recentUpdatedFile) {
                 const latestEditorHistoryContent: string | undefined = recentUpdatedFile && await this.readFile(recentUpdatedFile);
                 if (this.historyFileTimeDifference(document) && latestEditorHistoryContent && !(activeDocumentContent === latestEditorHistoryContent)) {
-                    await this.writeFile(historyFilePath, activeDocumentContent);
+                    await this.writeFile(historyFilePath, activeDocumentContent, true);
                     return;
                 }
                 else {
                     fs.renameSync(recentUpdatedFile, historyFilePath);
-                    await this.writeFile(historyFilePath, activeDocumentContent);
+                    await this.writeFile(historyFilePath, activeDocumentContent, true);
                     return;
                 }
             }
-            await this.writeFile(historyFilePath, activeDocumentContent);
+            await this.writeFile(historyFilePath, activeDocumentContent, true);
         }
         catch (err) {
             console.warn('An error has occurred when saving the active editor content', err);
@@ -177,7 +181,7 @@ export class LocalHistoryManager {
         if (current && previous) {
             try {
                 const fileContent = await this.readFile(previous.document.fileName);
-                await this.writeFile(current.document.fileName, fileContent);
+                await this.writeFile(current.document.fileName, fileContent, false);
             } catch (err) {
                 console.warn('An error has occurred when reverting to previous revision', err);
             }
@@ -203,11 +207,20 @@ export class LocalHistoryManager {
      * @param uri: the target uri for the new file.
      * @param content: the data to be stored in the file
      */
-    private writeFile(uri: string, content: string): Promise<string> {
+    private writeFile(uri: string, content: string, changePermission: boolean): Promise<string> {
         const writeStream = fs.createWriteStream(uri);
         return new Promise((resolve) => {
             writeStream.on('open', () => writeStream.write(content));
             writeStream.on('end', () => resolve());
+
+            if (changePermission) {
+                // Change file permission to read-only.
+                fs.chmod(uri, 0o400, (err) => {
+                    if (err) {
+                        console.warn(err);
+                    }
+                });
+            }
         });
     }
 
@@ -306,5 +319,16 @@ export class LocalHistoryManager {
     private getHashedFolderPath(uri: string): string {
         const hashedEditorPath = checksum(uri);
         return path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, hashedEditorPath);
+    }
+
+    /**
+     * Check if the active text document is read-only.
+     */
+    private checkPermission(document: vscode.TextDocument): void {
+        if ((fs.statSync(document.uri.fsPath).mode & 146) === 0) {
+            // Document is in read-only mode.
+            vscode.window.showErrorMessage('Revision file is read-only mode.');
+            vscode.commands.executeCommand('undo');
+        }
     }
 }
