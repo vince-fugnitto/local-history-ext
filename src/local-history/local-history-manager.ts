@@ -33,6 +33,10 @@ export class LocalHistoryManager {
         vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
             this.checkPermission(event.document);
         });
+
+        vscode.workspace.onDidRenameFiles((renameEvent: vscode.FileRenameEvent) => {
+            this.renameFolder(renameEvent.files);
+        });
     }
 
     /**
@@ -329,6 +333,27 @@ export class LocalHistoryManager {
             // Document is in read-only mode.
             vscode.window.showErrorMessage('Revision file is read-only mode.');
             vscode.commands.executeCommand('undo');
+        }
+    }
+    /**
+     * Renames the folder containing the revisions, if the source file is renamed via user - based actions.
+     * @param oldUri the previous uri of the file before rename
+     * @param newUri the neww uri of the file after rename
+     */
+    private renameFolder(files: ReadonlyArray<{ oldUri: vscode.Uri, newUri: vscode.Uri }>): void {
+        for (const file of files) {
+            try {
+                const oldNormalizedPath = path.normalize(file.oldUri.fsPath);
+                const newNormalizedPath = path.normalize(file.newUri.fsPath);
+                const oldHashedEditorPath = this.getHashedFolderPath(oldNormalizedPath);
+                const newHashedEditorPath = this.getHashedFolderPath(newNormalizedPath);
+                if (fs.existsSync(oldHashedEditorPath)) {
+                    fs.renameSync(oldHashedEditorPath, newHashedEditorPath);
+                }
+            } catch (err) {
+                console.log(err);
+            }
+            break;
         }
     }
 }
