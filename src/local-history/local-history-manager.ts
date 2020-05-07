@@ -18,6 +18,8 @@ export interface HistoryFileProperties {
     uri: string;
 }
 
+export const LOCAL_HISTORY_DIRNAME = '.local-history';
+
 export class LocalHistoryManager {
 
     private historyFilesForActiveEditor: HistoryFileProperties[] = [];
@@ -49,7 +51,7 @@ export class LocalHistoryManager {
                 }
             }
         } catch (err) {
-            console.warn('An error has occurred when reading the .local-history directory', err);
+            console.warn(`An error has occurred when reading the ${LOCAL_HISTORY_DIRNAME} directory`, err);
         }
     }
 
@@ -74,8 +76,7 @@ export class LocalHistoryManager {
      */
     public viewHistory(uri: vscode.Uri): void {
         if (uri) {
-            const hashedEditorPath = checksum(uri.fsPath);
-            const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
+            const hashedFolderPath = this.getHashedFolderPath(uri.fsPath);
 
             this.loadHistory(hashedFolderPath).then(() => {
                 let items: vscode.QuickPickItem[] = this.historyFilesForActiveEditor.map(item => ({
@@ -128,8 +129,7 @@ export class LocalHistoryManager {
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
         const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
-        const hashedEditorPath = checksum(document.fileName);
-        const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
+        const hashedFolderPath = this.getHashedFolderPath(document.fileName);
 
         // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
         if (!fs.existsSync(hashedFolderPath)) {
@@ -234,8 +234,7 @@ export class LocalHistoryManager {
      */
     public clearHistory(uri: vscode.Uri): void {
         if (uri) {
-            const hashedEditorPath = checksum(uri.fsPath);
-            const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedEditorPath);
+            const hashedFolderPath = this.getHashedFolderPath(uri.fsPath);
 
             // Check if local history exists for the active file
             if (!fs.existsSync(hashedFolderPath)) {
@@ -289,8 +288,7 @@ export class LocalHistoryManager {
      */
     private historyFileTimeDifference(document: vscode.TextDocument): boolean {
         const currentTime = Date.now();
-        const hashedFileName = checksum(document.fileName);
-        const hashedFolderPath = path.join(os.homedir(), '.local-history', hashedFileName);
+        const hashedFolderPath = this.getHashedFolderPath(document.fileName);
         const recentRevision = this.getMostRecentRevision(hashedFolderPath);
         if (recentRevision) {
             const recentRevisionTime = fs.statSync(recentRevision).mtimeMs;
@@ -300,5 +298,13 @@ export class LocalHistoryManager {
             }
         }
         return false;
+    }
+    /**
+     * Returns the hashed folder path of the uri.
+     * @param uri the file URI.
+     */
+    private getHashedFolderPath(uri: string): string {
+        const hashedEditorPath = checksum(uri);
+        return path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, hashedEditorPath);
     }
 }
