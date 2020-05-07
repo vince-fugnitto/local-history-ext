@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { LocalHistoryPreferenceService } from './local-history-preference-service';
 import * as os from 'os';
 import * as crypto from 'crypto';
+import * as moment from 'moment';
 
 function checksum(str: string, algorithm: string = 'md5') {
     return crypto
@@ -85,7 +86,8 @@ export class LocalHistoryManager {
             this.loadHistory(hashedFolderPath).then(() => {
                 let items: vscode.QuickPickItem[] = this.historyFilesForActiveEditor.map(item => ({
                     label: `$(calendar) ${item.timestamp}`,
-                    description: path.basename(item.uri)
+                    description: path.basename(item.uri),
+                    detail: `Created ${moment(fs.statSync(item.uri).birthtime).fromNow()}`
                 }));
 
                 if (items.length === 0) {
@@ -98,8 +100,7 @@ export class LocalHistoryManager {
                 vscode.window.showQuickPick(items,
                     {
                         placeHolder: `Please select a local history revision for '${path.basename(uri.fsPath)}'`,
-                        matchOnDescription: true,
-                        matchOnDetail: true
+                        matchOnDescription: true
                     }).then((selection) => {
                         // User made final selection.
                         if (!selection) {
