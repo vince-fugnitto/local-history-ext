@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { LocalHistoryPreferenceService } from './local-history-preference-service';
+import { LocalHistoryPreferencesService } from './local-history-preferences-service';
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as moment from 'moment';
@@ -24,7 +24,7 @@ export const LOCAL_HISTORY_DIRNAME = '.local-history';
 export class LocalHistoryManager {
 
     private historyFilesForActiveEditor: HistoryFileProperties[] = [];
-    private localHistoryPreferenceService: LocalHistoryPreferenceService = new LocalHistoryPreferenceService();
+    private localHistoryPreferencesService: LocalHistoryPreferencesService = new LocalHistoryPreferencesService();
 
     constructor() {
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
@@ -100,7 +100,7 @@ export class LocalHistoryManager {
                 }
 
                 // Limits the number of entries based on the preference 'local-history.maxEntriesPerFile`.
-                items = items.slice(0, this.localHistoryPreferenceService.maxEntriesPerFile);
+                items = items.slice(0, this.localHistoryPreferencesService.maxEntriesPerFile);
                 vscode.window.showQuickPick(items,
                     {
                         placeHolder: `Please select a local history revision for '${path.basename(uri.fsPath)}'`,
@@ -278,7 +278,7 @@ export class LocalHistoryManager {
     }
     /**
      * Gets the most recent revision of the file.
-     * If no previous revisions for the file are found, will return undefined. 
+     * If no previous revisions for the file are found, will return undefined.
      * @param directoryUri the directory uri which has the revisions of the targeted file.
      */
     private getMostRecentRevision(directoryUri: string): string | undefined {
@@ -302,7 +302,7 @@ export class LocalHistoryManager {
 
     /**
      * Checks to see if the elapsed time from last revision to present is greater than the preference time.
-     * @param document Represent the active text document. 
+     * @param document Represent the active text document.
      */
     private historyFileTimeDifference(document: vscode.TextDocument): boolean {
         const currentTime = Date.now();
@@ -311,7 +311,7 @@ export class LocalHistoryManager {
         if (recentRevision) {
             const recentRevisionTime = fs.statSync(recentRevision).mtimeMs;
             const timeDifference = currentTime - recentRevisionTime;
-            if (timeDifference > this.localHistoryPreferenceService.autoSaveDelay) {
+            if (timeDifference > this.localHistoryPreferencesService.saveDelay) {
                 return true;
             }
         }
