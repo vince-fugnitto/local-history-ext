@@ -34,6 +34,10 @@ export class LocalHistoryManager {
         vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
             this.checkPermission(event.document);
         });
+
+        vscode.workspace.onDidCloseTextDocument((document: vscode.TextDocument) => {
+            this.saveEditorContext(document);
+        });
     }
 
     /**
