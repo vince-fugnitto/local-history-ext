@@ -59,6 +59,23 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Command which removes old revisions.
+    disposable.push(
+        vscode.commands.registerCommand('local-history.clearOldHistory', async () => {
+            const days = await vscode.window.showInputBox({
+                value: '30',
+                placeHolder: 'Please enter the amount of days',
+                validateInput: input => {
+                    const day = parseInt(input);
+                    return day ? undefined : 'Please enter a valid positive number';
+                }
+            });
+            if (days) {
+                provider.removeOldFiles(parseInt(days));
+            }
+        })
+    );
+
     context.subscriptions.push(...disposable);
 }
 
