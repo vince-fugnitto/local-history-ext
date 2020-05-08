@@ -40,6 +40,10 @@
             {
                 "command": "local-history.clearHistory",
                 "title": "Local History: Clear History"
+            },
+            {
+                "command": "local-history.clearOldHistory",
+                "title": "Local History: Clear Old History"
             }
         ],
         "menus": {

@@ -13,6 +13,11 @@ function checksum(str: string, algorithm: string = 'md5') {
         .digest('hex');
 }
 
+/**
+ * Milliseconds in one day.
+ */
+export const DAY_TO_MILLISECONDS = 86400000;
+
 export interface HistoryFileProperties {
     fileName: string;
     timestamp: string;
@@ -330,6 +335,38 @@ export class LocalHistoryManager {
             // Document is in read-only mode.
             vscode.window.showErrorMessage('Revision file is read-only mode.');
             vscode.commands.executeCommand('undo');
+        }
+    }
+
+    /**
+     * Clears all history files which are last modified @param days ago.
+     * @param days The number of days.
+     */
+    public removeOldFiles(days: number): void {
+        const dirPath = path.join(os.homedir(), LOCAL_HISTORY_DIRNAME);
+        if (!fs.existsSync(dirPath)) {
+            return;
+        }
+        try {
+            const folders = fs.readdirSync(dirPath);
+            const currentDate = Date.now();
+            let counter: number = 0;
+            for (const folder of folders) {
+                const hashedFolderPath = path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, folder);
+                const files = fs.readdirSync(hashedFolderPath);
+                files.filter((file) => {
+                    const filePath = path.join(hashedFolderPath, file);
+                    const mTime = fs.statSync(filePath).mtimeMs;
+                    if (currentDate - mTime > days * DAY_TO_MILLISECONDS) {
+                        fs.unlinkSync(filePath);
+                        counter++;
+                    }
+                });
+            }
+            vscode.window.showInformationMessage(counter > 0 ? `Successfully deleted ${counter} local-history file(s)` : `No local-history found older than ${days} day(s)`);
+        }
+        catch (err) {
+            console.log(err);
         }
     }
 }
