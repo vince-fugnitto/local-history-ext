@@ -106,10 +106,10 @@
                     "default": 10,
                     "description": "Controls the number of entries to keep for a given file"
                 },
-                "local-history.autoSaveDelay": {
+                "local-history.saveDelay": {
                     "type": "number",
                     "default": 5000,
-                    "description": "Controls delay in auto saving of local history in milliseconds."
+                    "description": "Controls the save delay in milliseconds"
                 }
             }
         }
@@ -121,9 +121,11 @@
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile",
         "test": "node ./out/test/runTest.js",
-        "lint": "eslint . --ext .ts"
+        "lint": "eslint . --ext .ts",
+        "mocha": "mocha -r ts-node/register src/**/*.spec.ts"
     },
     "devDependencies": {
+        "@types/chai": "^4.2.11",
         "@types/glob": "^7.1.1",
         "@types/mocha": "^5.2.7",
         "@types/node": "^12.11.7",
@@ -133,12 +135,15 @@
         "eslint": "^6.8.0",
         "eslint-config-google": "^0.14.0",
         "glob": "^7.1.5",
-        "mocha": "^6.2.2",
+        "mocha": "^6.2.3",
+        "ts-node": "^8.10.1",
         "tslint": "^5.20.0",
         "typescript": "^3.6.4",
+        "typings": "^2.1.1",
         "vscode-test": "^1.2.2"
     },
     "dependencies": {
+        "chai": "^4.2.0",
         "moment": "2.24.0"
     }
 }
