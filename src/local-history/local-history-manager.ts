@@ -87,7 +87,7 @@ export class LocalHistoryManager {
                 let items: vscode.QuickPickItem[] = this.historyFilesForActiveEditor.map(item => ({
                     label: `$(calendar) ${item.timestamp}`,
                     description: path.basename(item.uri),
-                    detail: `Created ${moment(fs.statSync(item.uri).birthtime).fromNow()}`
+                    detail: `Last modified ${moment(item.timestamp.replace(/[-: ]/g, ''), 'YYYYMMDDhhmmss').fromNow()}`
                 }));
 
                 if (items.length === 0) {
