@@ -35,3 +35,11 @@ export const FILE_SIZE_LIMIT: LocalHistoryPreference = {
     id: 'local-history.fileSizeLimit',
     default: 25
 };
+
+/**
+ * Limits the maximum number of revisions saved per file. 
+ */
+export const FILE_LIMIT: LocalHistoryPreference = {
+    id: 'local-history.fileLimit',
+    default: 30
+};
