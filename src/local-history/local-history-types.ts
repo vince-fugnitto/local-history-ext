@@ -67,7 +67,7 @@ export namespace Preferences {
      */
     export const FILE_SIZE_LIMIT: LocalHistoryPreference = {
         id: 'local-history.fileSizeLimit',
-        default: 25
+        default: 5
     };
 
     /**
@@ -83,7 +83,7 @@ export namespace Preferences {
      */
     export const SAVE_DELAY: LocalHistoryPreference = {
         id: 'local-history.saveDelay',
-        default: 5000
+        default: 300000
     };
 
 }
