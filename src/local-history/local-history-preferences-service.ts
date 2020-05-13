@@ -1,14 +1,16 @@
 import * as vscode from 'vscode';
-import { MAX_ENTRIES_PER_FILE, SAVE_DELAY } from './local-history-preferences';
+import { MAX_ENTRIES_PER_FILE, SAVE_DELAY, FILE_SIZE_LIMIT } from './local-history-preferences';
 
 export class LocalHistoryPreferencesService {
 
     private _maxEntriesPerFile: number = MAX_ENTRIES_PER_FILE.default;
     private _saveDelay: number = SAVE_DELAY.default;
+    private _fileSizeLimit: number = FILE_SIZE_LIMIT.default;
 
     constructor() {
         this.maxEntriesPerFile = this.getMaxEntriesPerFile();
         this.saveDelay = this.getSaveDelay();
+        this.fileSizeLimit = this.getFileSizeLimit();
 
         // Listen to changes to the preferences configuration and update accordingly.
         vscode.workspace.onDidChangeConfiguration((event: vscode.ConfigurationChangeEvent) => {
@@ -17,6 +19,9 @@ export class LocalHistoryPreferencesService {
             }
             if (event.affectsConfiguration(SAVE_DELAY.id)) {
                 this.saveDelay = this.getSaveDelay();
+            }
+            if (event.affectsConfiguration(FILE_SIZE_LIMIT.id)) {
+                this.fileSizeLimit = this.getFileSizeLimit();
             }
         });
     }
@@ -54,6 +59,22 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
+     * Get the file size limit in megabytes.
+     * @returns the file size limit in megabytes.
+     */
+    get fileSizeLimit(): number {
+        return this._fileSizeLimit;
+    }
+
+    /**
+     * Set the file size limit.
+     * @param limit the file size limit in megabytes.
+     */
+    set fileSizeLimit(limit: number) {
+        this._fileSizeLimit = limit;
+    }
+
+    /**
      * Get the configuration value for the given preference id.
      * @param id the unique identifier for the preference.
      * @returns the configuration value.
@@ -76,5 +97,13 @@ export class LocalHistoryPreferencesService {
     private getSaveDelay(): number {
         const value = this.getPreferenceValueById(SAVE_DELAY.id);
         return typeof value === 'number' ? value : SAVE_DELAY.default as number;
+    }
+
+    /**
+     * Get the configuration value for 'FILE_SIZE_LIMIT'
+     */
+    private getFileSizeLimit(): number {
+        const value = this.getPreferenceValueById(FILE_SIZE_LIMIT.id);
+        return typeof value === 'number' ? value : FILE_SIZE_LIMIT.default as number;
     }
 }

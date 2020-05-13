@@ -139,6 +139,10 @@ export class LocalHistoryManager {
      * Save the current context of the active editor.
      */
     public async saveEditorContext(document: vscode.TextDocument): Promise<void> {
+        if (!this.fileSizeLimit(document)) {
+            return;
+        }
+
         const timestamp = this.getCurrentTime();
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
@@ -372,5 +376,18 @@ export class LocalHistoryManager {
         catch (err) {
             console.log(err);
         }
+    }
+
+    /**
+     * Checks the size of file in active editor against the preference value 'fileSizeLimit'
+     * @param document Represent the active text document.
+     */
+    private fileSizeLimit(document: vscode.TextDocument): boolean {
+        const sizeInBytes = fs.statSync(document.uri.fsPath).size;
+        const sizeInMegaBytes = sizeInBytes / 1000000;
+        if (sizeInMegaBytes > this.localHistoryPreferencesService.fileSizeLimit) {
+            return false;
+        }
+        return true;
     }
 }
