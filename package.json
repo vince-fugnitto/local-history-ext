@@ -155,6 +155,11 @@
                     "type": "number",
                     "default": 5000,
                     "description": "Controls the save delay in milliseconds."
+                },
+                "local-history.fileSizeLimit": {
+                    "type": "number",
+                    "default": 25,
+                    "description": "Controls the maximum acceptable file size for storing revisions in megabytes."
                 }
             }
         }

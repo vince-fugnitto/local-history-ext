@@ -27,3 +27,11 @@ export const SAVE_DELAY: LocalHistoryPreference = {
     id: 'local-history.saveDelay',
     default: 5000
 };
+
+/**
+ * Controls the maximum acceptable file size for storing revisions.
+ */
+export const FILE_SIZE_LIMIT: LocalHistoryPreference = {
+    id: 'local-history.fileSizeLimit',
+    default: 25
+};
