@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { LocalHistoryManager } from './local-history/local-history-manager';
+import { LocalHistoryTreeProvider } from './local-history/local-history-tree-provider';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -8,7 +9,7 @@ export function activate(context: vscode.ExtensionContext) {
     const disposable: vscode.Disposable[] = [];
 
     // Instantiate a new local history manager.
-    const provider: LocalHistoryManager = new LocalHistoryManager();
+    const manager: LocalHistoryManager = new LocalHistoryManager();
 
     disposable.push(
         // Displays the local history of the active file.
@@ -16,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (uri === undefined) {
                 uri = vscode.window.activeTextEditor!.document.uri;
             }
-            provider.viewHistory(uri);
+            manager.viewHistory(uri);
 
         })
     );
@@ -28,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (editors && editors.length === 2) {
                 vscode.window.showWarningMessage(`Are you sure you want to revert '${path.basename(editors[1].document.fileName)}' to its previous state?`, { modal: true }, 'Revert').then((selection) => {
                     if (selection === 'Revert') {
-                        provider.revertToPrevRevision(editors[0], editors[1]);
+                        manager.revertToPrevRevision(editors[0], editors[1]);
                     }
                 });
             }
@@ -37,12 +38,20 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command which removes the active revision of a file.
     disposable.push(
-        vscode.commands.registerTextEditorCommand('local-history.removeRevision', () => {
+        vscode.commands.registerCommand('local-history.removeRevision', (revision) => {
             const editors = vscode.window.visibleTextEditors;
             if (editors && editors.length === 2) {
+                // Diff is opened, click 'Remove revision' either from diff toolbar or tree-view
                 vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(editors[0].document.fileName)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
                     if (selection === 'Delete') {
-                        provider.removeRevision(editors[0]);
+                        manager.removeRevision(editors[0].document.uri, true);
+                    }
+                });
+            } else if (revision) {
+                // No diff opened, click 'Remove revision' from tree-view
+                vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(revision.uri)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
+                    if (selection === 'Delete') {
+                        manager.removeRevision(vscode.Uri.file(revision.uri));
                     }
                 });
             }
@@ -55,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (uri === undefined) {
                 uri = vscode.window.activeTextEditor!.document.uri;
             }
-            provider.clearHistory(uri);
+            manager.clearHistory(uri);
         })
     );
 
@@ -71,12 +80,19 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             });
             if (days) {
-                provider.removeOldFiles(parseInt(days));
+                manager.removeOldFiles(parseInt(days));
             }
         })
     );
 
     context.subscriptions.push(...disposable);
+
+    // Tree View
+    const treeProvider = new LocalHistoryTreeProvider(manager);
+    vscode.window.registerTreeDataProvider('localHistoryTree', treeProvider);
+    vscode.commands.registerCommand('local-history.refreshEntry', () => treeProvider.refresh());
+    vscode.commands.registerCommand('extension.openRevisionInDiff', uri =>
+        manager.displayDiff(vscode.Uri.file(uri), vscode.window.activeTextEditor!.document.uri));
 }
 
 export function deactivate() { }
