@@ -170,13 +170,18 @@ export class LocalHistoryManager {
             if (recentUpdatedFile) {
                 const latestEditorHistoryContent: string | undefined = recentUpdatedFile && await this.readFile(recentUpdatedFile);
                 if (this.historyFileTimeDifference(document) && latestEditorHistoryContent && !(activeDocumentContent === latestEditorHistoryContent)) {
-                    await this.writeFile(historyFilePath, activeDocumentContent, true);
-                    return;
+                    if (!this.checkRevisionLimit(document)) {
+                        await this.writeFile(historyFilePath, activeDocumentContent, true);
+                        return;
+                    }
                 }
                 else {
                     fs.renameSync(recentUpdatedFile, historyFilePath);
                     await this.writeFile(historyFilePath, activeDocumentContent, true);
                     return;
+                }
+                if (this.checkRevisionLimit(document)) {
+                    this.removeOldestRevision(document);
                 }
             }
             await this.writeFile(historyFilePath, activeDocumentContent, true);
@@ -317,6 +322,17 @@ export class LocalHistoryManager {
     }
 
     /**
+     * Gets the oldest revision of the file.
+     * If no previous revisions for the file are found, will return undefined.
+     * @param directoryUri the directory uri which has the revisions of the targeted file.
+     */
+    private getOldestRevision(directoryUri: string): string | undefined {
+        // Collect the list of revisions sorted by the most recent modified time.
+        const revisions = fs.readdirSync(directoryUri).sort((a, b) => this.compareModificationTime(directoryUri, a, b));
+        return revisions[revisions.length - 1] ? path.join(directoryUri, revisions[revisions.length - 1]) : undefined;
+    }
+
+    /**
      * Compare two revisions based on their modified time (in milliseconds).
      * @param directoryUri the directory URI.
      * @param a the first revision path.
@@ -409,5 +425,36 @@ export class LocalHistoryManager {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Checks the number of revisions of a file against the preference 'File-Limit' value
+     * @param document Represent the active text document.
+     */
+    private checkRevisionLimit(document: vscode.TextDocument): boolean {
+        const hashedPath = path.normalize(this.getHashedFolderPath(document.uri.fsPath));
+        try {
+            const files = fs.readdirSync(hashedPath);
+            if (files.length >= this.localHistoryPreferencesService.fileLimit) {
+                return true;
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        return false;
+    }
+
+    /**
+     * Removes the oldest history file for the active text document. 
+     * @param document Represent the active text document.
+     */
+    private removeOldestRevision(document: vscode.TextDocument): void {
+        if (this.checkRevisionLimit(document)) {
+            const hashedPath = this.getHashedFolderPath(document.uri.fsPath);
+            const oldestRevision = this.getOldestRevision(hashedPath);
+            if (oldestRevision) {
+                fs.unlinkSync(oldestRevision);
+            }
+        }
     }
 }

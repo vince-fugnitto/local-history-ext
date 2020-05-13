@@ -160,6 +160,12 @@
                     "type": "number",
                     "default": 25,
                     "description": "Controls the maximum acceptable file size for storing revisions in megabytes."
+                },
+                "local-history.fileLimit": {
+                    "type": "number",
+                    "default": 30,
+                    "minimum": 1,
+                    "description": "Controls the maximum number of saved revisions allowed for a given file"
                 }
             }
         }
