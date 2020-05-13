@@ -28,12 +28,13 @@ export const LOCAL_HISTORY_DIRNAME = '.local-history';
 
 export class LocalHistoryManager {
 
-    private historyFilesForActiveEditor: HistoryFileProperties[] = [];
+    private _historyFilesForActiveEditor: HistoryFileProperties[] = [];
     private localHistoryPreferencesService: LocalHistoryPreferencesService = new LocalHistoryPreferencesService();
 
     constructor() {
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
             this.saveEditorContext(document);
+            vscode.commands.executeCommand('local-history.refreshEntry');
         });
 
         vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
@@ -46,11 +47,18 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Load existing entries on activation from local file system.
+     * Get array for storing the local history of the active editor.
+     */
+    get historyFilesForActiveEditor(): HistoryFileProperties[] {
+        return this._historyFilesForActiveEditor;
+    }
+
+    /**
+     * Load local history for the active file.
      */
     public async loadHistory(hashedFolderPath: string): Promise<void> {
 
-        this.historyFilesForActiveEditor = [];
+        this._historyFilesForActiveEditor = [];
         const hashedFolderUri = vscode.Uri.file(hashedFolderPath);
 
         try {
@@ -61,7 +69,7 @@ export class LocalHistoryManager {
                         timestamp: this.parseTimestamp(fileName),
                         uri: path.join(hashedFolderPath, fileName),
                     };
-                    this.historyFilesForActiveEditor.unshift(data);
+                    this._historyFilesForActiveEditor.unshift(data);
                 }
             }
         } catch (err) {
@@ -93,7 +101,7 @@ export class LocalHistoryManager {
             const hashedFolderPath = this.getHashedFolderPath(uri.fsPath);
 
             this.loadHistory(hashedFolderPath).then(() => {
-                let items: vscode.QuickPickItem[] = this.historyFilesForActiveEditor.map(item => ({
+                let items: vscode.QuickPickItem[] = this._historyFilesForActiveEditor.map(item => ({
                     label: `$(calendar) ${item.timestamp}`,
                     description: path.basename(item.uri),
                     detail: `Last modified ${moment(item.timestamp.replace(/[-: ]/g, ''), 'YYYYMMDDhhmmss').fromNow()}`
@@ -177,7 +185,7 @@ export class LocalHistoryManager {
     /**
      * Compare the two revisions and show the diff between them.
      */
-    private displayDiff(previous: vscode.Uri, current: vscode.Uri): void {
+    public displayDiff(previous: vscode.Uri, current: vscode.Uri): void {
         if (current && previous) {
             const tabTitle = path.basename(previous.fsPath) + ' <-> ' + path.basename(current.fsPath);
             vscode.commands.executeCommand('vscode.diff', previous, current, tabTitle);
@@ -237,16 +245,27 @@ export class LocalHistoryManager {
     /**
      * Remove the active revision of a file.
      */
-    public removeRevision(revision: vscode.TextEditor): void {
+    public removeRevision(revision: vscode.Uri, diffActive?: boolean): void {
         if (revision) {
             // Remove the revision.
-            fs.unlink(revision.document.fileName, (err) => {
+            fs.unlink(revision.fsPath, (err) => {
                 if (err) {
                     console.warn('An error has occurred when removing the revision', err.message);
                     return;
                 }
-                vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-                vscode.window.showInformationMessage(`'${path.basename(revision.document.fileName)}' was deleted.`);
+
+                if (diffActive) {
+                    vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                } else {
+                    // If diff is opened (but not active), close the diff window after the revision is removed
+                    vscode.workspace.openTextDocument(revision).then(async doc => {
+                        await vscode.window.showTextDocument(doc);
+                        vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+                    });
+
+                    vscode.window.showInformationMessage(`'${path.basename(revision.fsPath)}' was deleted.`);
+                    vscode.commands.executeCommand('local-history.refreshEntry');
+                }
             });
         }
     }
@@ -274,6 +293,7 @@ export class LocalHistoryManager {
                         }
                         fs.rmdirSync(hashedFolderPath);
                         vscode.window.showInformationMessage(`All revisions for '${path.basename(uri.fsPath)}' were deleted.`);
+                        vscode.commands.executeCommand('local-history.refreshEntry');
                     }
                 });
             } catch (err) {
@@ -326,7 +346,7 @@ export class LocalHistoryManager {
      * Returns the hashed folder path of the uri.
      * @param uri the file URI.
      */
-    private getHashedFolderPath(uri: string): string {
+    public getHashedFolderPath(uri: string): string {
         const hashedEditorPath = checksum(uri);
         return path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, hashedEditorPath);
     }
@@ -337,7 +357,7 @@ export class LocalHistoryManager {
     private checkPermission(document: vscode.TextDocument): void {
         if ((fs.statSync(document.uri.fsPath).mode & 146) === 0) {
             // Document is in read-only mode.
-            vscode.window.showErrorMessage('Revision file is read-only mode.');
+            vscode.window.showErrorMessage('Revision is read-only.');
             vscode.commands.executeCommand('undo');
         }
     }

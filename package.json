@@ -20,6 +20,29 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
+        "viewsWelcome": [
+            {
+                "view": "localHistoryTree",
+                "contents": "No local history found."
+            }
+        ],
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "localHistory",
+                    "title": "Local History",
+                    "icon": "resources/history.svg"
+                }
+            ]
+        },
+        "views": {
+            "localHistory": [
+                {
+                    "id": "localHistoryTree",
+                    "name": "Active Editor Revisions"
+                }
+            ]
+        },
         "commands": [
             {
                 "command": "local-history.viewHistory",
@@ -34,8 +57,7 @@
             {
                 "command": "local-history.removeRevision",
                 "title": "Local History: Remove Revision",
-                "icon": "$(trash)",
-                "when": "textCompareEditorVisible && isInDiffEditor"
+                "icon": "$(trash)"
             },
             {
                 "command": "local-history.clearHistory",
@@ -44,6 +66,11 @@
             {
                 "command": "local-history.clearOldHistory",
                 "title": "Local History: Clear Old History"
+            },
+            {
+                "command": "local-history.refreshEntry",
+                "title": "Local History: Refresh",
+                "icon": "$(refresh)"
             }
         ],
         "menus": {
@@ -99,6 +126,20 @@
                     "command": "local-history.clearHistory",
                     "when": "!explorerResourceIsFolder",
                     "group": "LocalHistory@2"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "local-history.refreshEntry",
+                    "when": "view == localHistoryTree",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "local-history.removeRevision",
+                    "when": "view == localHistoryTree",
+                    "group": "inline"
                 }
             ]
         },
