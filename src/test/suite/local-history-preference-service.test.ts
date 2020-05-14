@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as mocha from 'mocha';
 import * as vscode from 'vscode';
 import { LocalHistoryPreferencesService } from '../../local-history/local-history-preferences-service';
-import { MAX_ENTRIES_PER_FILE, SAVE_DELAY } from '../../local-history/local-history-preferences';
+import { Preferences } from '../../local-history/local-history-types';
 
 mocha.suite('LocalHistoryPreferencesService', () => {
 
@@ -14,13 +14,35 @@ mocha.suite('LocalHistoryPreferencesService', () => {
     });
 
     mocha.afterEach(async () => {
-        service.maxEntriesPerFile = MAX_ENTRIES_PER_FILE.default;
-        service.saveDelay = SAVE_DELAY.default;
+        service.maxEntriesPerFile = Preferences.MAX_ENTRIES_PER_FILE.default;
+        service.saveDelay = Preferences.SAVE_DELAY.default;
     });
 
-    mocha.describe(`Preference: '${MAX_ENTRIES_PER_FILE.id}'`, () => {
+    mocha.describe(`Preference: '${Preferences.FILE_LIMIT.id}'`, () => {
         mocha.it('should return the correct default value', () => {
-            assert.equal(service.maxEntriesPerFile, MAX_ENTRIES_PER_FILE.default);
+            assert.equal(service.fileLimit, Preferences.FILE_LIMIT.default);
+        });
+        mocha.it('should properly update the value', () => {
+            const updatedValue: number = 10;
+            service.fileLimit = updatedValue;
+            assert.equal(service.fileLimit, updatedValue);
+        });
+    });
+
+    mocha.describe(`Preference: '${Preferences.FILE_SIZE_LIMIT.id}'`, () => {
+        mocha.it('should return the correct default value', () => {
+            assert.equal(service.fileSizeLimit, Preferences.FILE_SIZE_LIMIT.default);
+        });
+        mocha.it('should properly update the value', () => {
+            const updatedValue: number = 10;
+            service.fileSizeLimit = updatedValue;
+            assert.equal(service.fileSizeLimit, updatedValue);
+        });
+    });
+
+    mocha.describe(`Preference: '${Preferences.MAX_ENTRIES_PER_FILE.id}'`, () => {
+        mocha.it('should return the correct default value', () => {
+            assert.equal(service.maxEntriesPerFile, Preferences.MAX_ENTRIES_PER_FILE.default);
         });
         mocha.it('should properly update the value', () => {
             const updatedValue: number = 100;
@@ -29,9 +51,9 @@ mocha.suite('LocalHistoryPreferencesService', () => {
         });
     });
 
-    mocha.describe(`Preference: '${SAVE_DELAY.id}'`, () => {
+    mocha.describe(`Preference: '${Preferences.SAVE_DELAY.id}'`, () => {
         mocha.it('should return the correct default value', () => {
-            assert.equal(service.saveDelay, SAVE_DELAY.default);
+            assert.equal(service.saveDelay, Preferences.SAVE_DELAY.default);
         });
         mocha.it('should properly update the value', () => {
             const updatedValue: number = 10;
@@ -41,11 +63,17 @@ mocha.suite('LocalHistoryPreferencesService', () => {
     });
 
     mocha.describe('Method: getPreferenceValueById', () => {
-        mocha.it(`should properly return the '${MAX_ENTRIES_PER_FILE.id}' preference`, () => {
-            assert.equal(service['getPreferenceValueById'](MAX_ENTRIES_PER_FILE.id), MAX_ENTRIES_PER_FILE.default);
+        mocha.it(`should properly return the '${Preferences.FILE_LIMIT.id}' preference`, () => {
+            assert.equal(service['getPreferenceValueById'](Preferences.FILE_LIMIT.id), Preferences.FILE_LIMIT.default);
         });
-        mocha.it(`should properly return the '${SAVE_DELAY.id}' preference`, () => {
-            assert.equal(service['getPreferenceValueById'](SAVE_DELAY.id), SAVE_DELAY.default);
+        mocha.it(`should properly return the '${Preferences.FILE_SIZE_LIMIT.id}' preference`, () => {
+            assert.equal(service['getPreferenceValueById'](Preferences.FILE_SIZE_LIMIT.id), Preferences.FILE_SIZE_LIMIT.default);
+        });
+        mocha.it(`should properly return the '${Preferences.MAX_ENTRIES_PER_FILE.id}' preference`, () => {
+            assert.equal(service['getPreferenceValueById'](Preferences.MAX_ENTRIES_PER_FILE.id), Preferences.MAX_ENTRIES_PER_FILE.default);
+        });
+        mocha.it(`should properly return the '${Preferences.SAVE_DELAY.id}' preference`, () => {
+            assert.equal(service['getPreferenceValueById'](Preferences.SAVE_DELAY.id), Preferences.SAVE_DELAY.default);
         });
     });
 
