@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { LocalHistoryManager } from './local-history/local-history-manager';
 import { LocalHistoryTreeProvider } from './local-history/local-history-tree-provider';
+import { Commands } from './local-history/local-history-types';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -13,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     disposable.push(
         // Displays the local history of the active file.
-        vscode.commands.registerCommand('local-history.viewHistory', (uri: vscode.Uri) => {
+        vscode.commands.registerCommand(Commands.VIEW_HISTORY, (uri: vscode.Uri) => {
             if (uri === undefined) {
                 uri = vscode.window.activeTextEditor!.document.uri;
             }
@@ -24,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command which reverts the active editor to its previous revision.
     disposable.push(
-        vscode.commands.registerTextEditorCommand('local-history.revertToPrevRevision', () => {
+        vscode.commands.registerTextEditorCommand(Commands.REVERT_TO_PREVIOUS_REVISION, () => {
             const editors = vscode.window.visibleTextEditors;
             if (editors && editors.length === 2) {
                 vscode.window.showWarningMessage(`Are you sure you want to revert '${path.basename(editors[1].document.fileName)}' to its previous state?`, { modal: true }, 'Revert').then((selection) => {
@@ -38,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command which removes the active revision of a file.
     disposable.push(
-        vscode.commands.registerCommand('local-history.removeRevision', (revision) => {
+        vscode.commands.registerCommand(Commands.REMOVE_REVISION, (revision) => {
             const editors = vscode.window.visibleTextEditors;
             if (editors && editors.length === 2) {
                 // Diff is opened, click 'Remove revision' either from diff toolbar or tree-view
@@ -60,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command which removes all revisions of the active file.
     disposable.push(
-        vscode.commands.registerCommand('local-history.clearHistory', (uri: vscode.Uri) => {
+        vscode.commands.registerCommand(Commands.CLEAR_HISTORY, (uri: vscode.Uri) => {
             if (uri === undefined) {
                 uri = vscode.window.activeTextEditor!.document.uri;
             }
@@ -70,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command which removes old revisions.
     disposable.push(
-        vscode.commands.registerCommand('local-history.clearOldHistory', async () => {
+        vscode.commands.registerCommand(Commands.CLEAR_OLD_HISTORY, async () => {
             const days = await vscode.window.showInputBox({
                 value: '30',
                 placeHolder: 'Please enter the amount of days',
@@ -90,8 +91,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Tree View
     const treeProvider = new LocalHistoryTreeProvider(manager);
     vscode.window.registerTreeDataProvider('localHistoryTree', treeProvider);
-    vscode.commands.registerCommand('local-history.refreshEntry', () => treeProvider.refresh());
-    vscode.commands.registerCommand('extension.openRevisionInDiff', uri =>
+    vscode.commands.registerCommand(Commands.TREE_REFRESH, () => treeProvider.refresh());
+    vscode.commands.registerCommand(Commands.TREE_DIFF, uri =>
         manager.displayDiff(vscode.Uri.file(uri), vscode.window.activeTextEditor!.document.uri));
 }
 

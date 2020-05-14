@@ -5,26 +5,7 @@ import { LocalHistoryPreferencesService } from './local-history-preferences-serv
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as moment from 'moment';
-
-function checksum(str: string, algorithm: string = 'md5') {
-    return crypto
-        .createHash(algorithm)
-        .update(str, 'utf8')
-        .digest('hex');
-}
-
-/**
- * Milliseconds in one day.
- */
-export const DAY_TO_MILLISECONDS = 86400000;
-
-export interface HistoryFileProperties {
-    fileName: string;
-    timestamp: string;
-    uri: string;
-}
-
-export const LOCAL_HISTORY_DIRNAME = '.local-history';
+import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
 
 export class LocalHistoryManager {
 
@@ -34,7 +15,7 @@ export class LocalHistoryManager {
     constructor() {
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
             this.saveEditorContext(document);
-            vscode.commands.executeCommand('local-history.refreshEntry');
+            vscode.commands.executeCommand(Commands.TREE_REFRESH);
         });
 
         vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
@@ -273,7 +254,7 @@ export class LocalHistoryManager {
                     });
 
                     vscode.window.showInformationMessage(`'${path.basename(revision.fsPath)}' was deleted.`);
-                    vscode.commands.executeCommand('local-history.refreshEntry');
+                    vscode.commands.executeCommand(Commands.TREE_REFRESH);
                 }
             });
         }
@@ -367,8 +348,8 @@ export class LocalHistoryManager {
      * @param uri the file URI.
      */
     public getHashedFolderPath(uri: string): string {
-        const hashedEditorPath = checksum(uri);
-        return path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, hashedEditorPath);
+        const hashedEditorPath = this.checksum(uri);
+        return path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, hashedEditorPath));
     }
 
     /**
@@ -407,7 +388,11 @@ export class LocalHistoryManager {
                     }
                 });
             }
-            vscode.window.showInformationMessage(counter > 0 ? `Successfully deleted ${counter} local-history file(s)` : `No local-history found older than ${days} day(s)`);
+            vscode.window.showInformationMessage(
+                counter > 0
+                    ? `Successfully deleted ${counter} local-history file(s)`
+                    : `No local-history found older than ${days} day(s)`
+            );
         }
         catch (err) {
             console.log(err);
@@ -445,7 +430,7 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Removes the oldest history file for the active text document. 
+     * Removes the oldest history file for the active text document.
      * @param document Represent the active text document.
      */
     private removeOldestRevision(document: vscode.TextDocument): void {
@@ -456,5 +441,12 @@ export class LocalHistoryManager {
                 fs.unlinkSync(oldestRevision);
             }
         }
+    }
+
+    private checksum(str: string, algorithm: string = 'md5') {
+        return crypto
+            .createHash(algorithm)
+            .update(str, 'utf8')
+            .digest('hex');
     }
 }

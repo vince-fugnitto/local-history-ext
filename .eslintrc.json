@@ -4,9 +4,6 @@
         "es6": true,
         "node": true
     },
-    "extends": [
-        "eslint:recommended"
-    ],
     "globals": {
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
@@ -35,7 +32,6 @@
         ],
         "no-return-await": "error",
         "no-shadow": "error",
-        "no-unused-vars": "error",
         "no-unused-expressions": "error",
         "no-unused-labels": "error",
         "no-use-before-define": "error",
