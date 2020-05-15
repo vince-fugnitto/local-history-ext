@@ -6,6 +6,14 @@ export const DAY_TO_MILLISECONDS = 86400000;
  * The local history directory name.
  */
 export const LOCAL_HISTORY_DIRNAME = '.local-history';
+/**
+ * The revisions directory name.
+ */
+export const LOCAL_HISTORY_REVISIONS_DIRNAME = 'revisions';
+/**
+ * The deleted files directory name.
+ */
+export const LOCAL_HISTORY_DELETION_DIRNAME = 'deletedFiles';
 
 /**
  * Describes a local-history preference.

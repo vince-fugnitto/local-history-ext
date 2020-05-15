@@ -5,7 +5,7 @@ import { LocalHistoryPreferencesService } from './local-history-preferences-serv
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as moment from 'moment';
-import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
+import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, LOCAL_HISTORY_REVISIONS_DIRNAME, LOCAL_HISTORY_DELETION_DIRNAME, Commands } from './local-history-types';
 
 export class LocalHistoryManager {
 
@@ -24,6 +24,10 @@ export class LocalHistoryManager {
 
         vscode.workspace.onDidCloseTextDocument((document: vscode.TextDocument) => {
             this.saveEditorContext(document);
+        });
+
+        vscode.workspace.onWillDeleteFiles((event: vscode.FileDeleteEvent) => {
+            this.storeDeletedFiles(event.files);
         });
     }
 
@@ -79,7 +83,7 @@ export class LocalHistoryManager {
      */
     public viewHistory(uri: vscode.Uri): void {
         if (uri) {
-            const hashedFolderPath = this.getHashedFolderPath(uri.fsPath);
+            const hashedFolderPath = this.getHashedRevisionFolderPath(uri.fsPath);
 
             this.loadHistory(hashedFolderPath).then(() => {
                 let items: vscode.QuickPickItem[] = this._historyFilesForActiveEditor.map(item => ({
@@ -136,7 +140,7 @@ export class LocalHistoryManager {
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
         const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
-        const hashedFolderPath = this.getHashedFolderPath(document.fileName);
+        const hashedFolderPath = this.getHashedRevisionFolderPath(document.fileName);
 
         // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
         if (!fs.existsSync(hashedFolderPath)) {
@@ -266,7 +270,7 @@ export class LocalHistoryManager {
      */
     public clearHistory(uri: vscode.Uri): void {
         if (uri) {
-            const hashedFolderPath = this.getHashedFolderPath(uri.fsPath);
+            const hashedFolderPath = this.getHashedRevisionFolderPath(uri.fsPath);
 
             // Check if local history exists for the active file
             if (!fs.existsSync(hashedFolderPath)) {
@@ -332,7 +336,7 @@ export class LocalHistoryManager {
      */
     private historyFileTimeDifference(document: vscode.TextDocument): boolean {
         const currentTime = Date.now();
-        const hashedFolderPath = this.getHashedFolderPath(document.fileName);
+        const hashedFolderPath = this.getHashedRevisionFolderPath(document.fileName);
         const recentRevision = this.getMostRecentRevision(hashedFolderPath);
         if (recentRevision) {
             const recentRevisionTime = fs.statSync(recentRevision).mtimeMs;
@@ -344,12 +348,21 @@ export class LocalHistoryManager {
         return false;
     }
     /**
-     * Returns the hashed folder path of the uri.
+     * Returns the hashed revision folder path of the uri.
      * @param uri the file URI.
      */
-    public getHashedFolderPath(uri: string): string {
+    public getHashedRevisionFolderPath(uri: string): string {
         const hashedEditorPath = this.checksum(uri);
-        return path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, hashedEditorPath));
+        return path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, LOCAL_HISTORY_REVISIONS_DIRNAME, hashedEditorPath);
+    }
+
+    /**
+     * Returns the hashed deletion folder path of the uri.
+     * @param uri the file URI.
+     */
+    public getHashedDeletionFolderPath(uri: string): string {
+        const hashedEditorPath = this.checksum(uri);
+        return path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, LOCAL_HISTORY_DELETION_DIRNAME, hashedEditorPath));
     }
 
     /**
@@ -417,7 +430,7 @@ export class LocalHistoryManager {
      * @param document Represent the active text document.
      */
     private checkRevisionLimit(document: vscode.TextDocument): boolean {
-        const hashedPath = path.normalize(this.getHashedFolderPath(document.uri.fsPath));
+        const hashedPath = path.normalize(this.getHashedRevisionFolderPath(document.uri.fsPath));
         try {
             const files = fs.readdirSync(hashedPath);
             if (files.length >= this.localHistoryPreferencesService.fileLimit) {
@@ -435,7 +448,7 @@ export class LocalHistoryManager {
      */
     private removeOldestRevision(document: vscode.TextDocument): void {
         if (this.checkRevisionLimit(document)) {
-            const hashedPath = this.getHashedFolderPath(document.uri.fsPath);
+            const hashedPath = this.getHashedRevisionFolderPath(document.uri.fsPath);
             const oldestRevision = this.getOldestRevision(hashedPath);
             if (oldestRevision) {
                 fs.unlinkSync(oldestRevision);
@@ -448,5 +461,28 @@ export class LocalHistoryManager {
             .createHash(algorithm)
             .update(str, 'utf8')
             .digest('hex');
+    }
+
+    /**
+     * Tracks the deleted files.
+     * @param files array of all the deleted file(s) uri.
+     */
+    private async storeDeletedFiles(files: ReadonlyArray<vscode.Uri>) {
+
+        for (const file of files) {
+            const hashedFolderPath = this.getHashedDeletionFolderPath(file.fsPath);
+            if (!fs.existsSync(hashedFolderPath)) {
+                fs.mkdirSync(hashedFolderPath, { recursive: true });
+            }
+            const filename = path.parse(file.fsPath).base;
+            const filePath = path.join(hashedFolderPath, filename);
+            try {
+                const fileContent = await this.readFile(file.fsPath);
+                await this.writeFile(filePath, fileContent, false);
+            }
+            catch (err) {
+                console.log(err);
+            }
+        }
     }
 }
