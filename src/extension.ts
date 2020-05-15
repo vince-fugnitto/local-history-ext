@@ -85,6 +85,16 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Command which undoes a revert.
+    disposable.push(
+        vscode.commands.registerTextEditorCommand('local-history.undoRevert', () => {
+            const editors = vscode.window.visibleTextEditors;
+            if (editors && editors.length === 2) {
+                manager.undoRevert(editors[1]);
+            }
+        })
+    );
+
     context.subscriptions.push(...disposable);
 
     // Tree View

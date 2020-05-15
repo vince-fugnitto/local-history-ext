@@ -71,6 +71,11 @@
                 "command": "local-history.refreshEntry",
                 "title": "Local History: Refresh",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "local-history.undoRevert",
+                "title": "Local History: Undo Revert",
+                "icon": "$(discard)"
             }
         ],
         "menus": {
@@ -90,6 +95,10 @@
                 {
                     "command": "local-history.clearHistory",
                     "when": "editorIsOpen && resourceScheme == file"
+                },
+                {
+                    "command": "local-history.undoRevert",
+                    "when": "false"
                 }
             ],
             "editor/title": [
@@ -99,9 +108,14 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "local-history.removeRevision",
+                    "command": "local-history.undoRevert",
                     "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
                     "group": "navigation@2"
+                },
+                {
+                    "command": "local-history.removeRevision",
+                    "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
+                    "group": "navigation@3"
                 }
             ],
             "editor/context": [

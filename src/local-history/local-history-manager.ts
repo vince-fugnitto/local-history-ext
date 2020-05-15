@@ -146,7 +146,7 @@ export class LocalHistoryManager {
     /**
      * Save the current context of the active editor.
      */
-    public async saveEditorContext(document: vscode.TextDocument): Promise<void> {
+    public async saveEditorContext(document: vscode.TextDocument, isRevertChange?: boolean): Promise<void> {
         if (!this.fileSizeLimit(document)) {
             return;
         }
@@ -154,7 +154,9 @@ export class LocalHistoryManager {
         const timestamp = this.getCurrentTime();
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
-        const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
+        // Revision was created either before a revert change 'r' or after a manual change 'm'
+        const revisionContext = isRevertChange ? 'r' : 'm';
+        const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}_${revisionContext}${fileFullPath.ext}`;
         const hashedFolderPath = this.getHashedFolderPath(document.fileName);
 
         // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
@@ -166,20 +168,20 @@ export class LocalHistoryManager {
             const historyFilePath = path.join(hashedFolderPath, historyFileName);
             // Copy the content of the current active editor.
             const activeDocumentContent: string = await this.readFile(document.fileName);
-            const recentUpdatedFile = this.getMostRecentRevision(hashedFolderPath);
-            if (recentUpdatedFile) {
-                const latestEditorHistoryContent: string | undefined = recentUpdatedFile && await this.readFile(recentUpdatedFile);
-                if (this.historyFileTimeDifference(document) && latestEditorHistoryContent && !(activeDocumentContent === latestEditorHistoryContent)) {
-                    await this.writeFile(historyFilePath, activeDocumentContent, true);
+            const mostRecentRevision = this.getMostRecentRevision(hashedFolderPath);
+            if (!isRevertChange && mostRecentRevision) {
+                const revisionContent: string | undefined = mostRecentRevision && await this.readFile(mostRecentRevision);
+                if (this.historyFileTimeDifference(document) && revisionContent && !(activeDocumentContent === revisionContent)) {
+                    await this.writeFile(historyFilePath, activeDocumentContent);
                     return;
                 }
                 else {
-                    fs.renameSync(recentUpdatedFile, historyFilePath);
-                    await this.writeFile(historyFilePath, activeDocumentContent, true);
+                    fs.renameSync(mostRecentRevision, historyFilePath);
+                    await this.writeFile(historyFilePath, activeDocumentContent);
                     return;
                 }
             }
-            await this.writeFile(historyFilePath, activeDocumentContent, true);
+            await this.writeFile(historyFilePath, activeDocumentContent);
         }
         catch (err) {
             console.warn('An error has occurred when saving the active editor content', err);
@@ -197,13 +199,22 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Revert the current active editor to its previous revision.
+     * Revert the current active editor to one of its previous revision.
      */
     public async revertToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): Promise<void> {
         if (current && previous) {
+            const revisionContent: string | undefined = await this.readFile(previous.document.fileName);
+            const activeDocumentContent: string = await this.readFile(current.document.fileName);
+            if (revisionContent && (activeDocumentContent === revisionContent)) {
+                // Prevent user from reverting to the same revision more than once.
+                return;
+            }
+
             try {
+                await this.saveEditorContext(current.document, true);
                 const fileContent = await this.readFile(previous.document.fileName);
-                await this.writeFile(current.document.fileName, fileContent, false);
+                await this.writeFile(current.document.fileName, fileContent);
+                vscode.commands.executeCommand('local-history.refreshEntry');
             } catch (err) {
                 console.warn('An error has occurred when reverting to previous revision', err);
             }
@@ -229,21 +240,14 @@ export class LocalHistoryManager {
      * @param uri: the target uri for the new file.
      * @param content: the data to be stored in the file
      */
-    private writeFile(uri: string, content: string, changePermission: boolean): Promise<string> {
-        const writeStream = fs.createWriteStream(uri);
-        return new Promise((resolve) => {
-            writeStream.on('open', () => writeStream.write(content));
-            writeStream.on('end', () => resolve());
-
-            if (changePermission) {
-                // Change file permission to read-only.
-                fs.chmod(uri, 0o400, (err) => {
-                    if (err) {
-                        console.warn(err);
-                    }
-                });
-            }
+    private writeFile(uri: string, content: string): Promise<string> {
+        const stream = fs.createWriteStream(uri, { mode: fs.constants.O_RDONLY, emitClose: true });
+        // Write the content of the file.
+        const promise: Promise<string> = new Promise(() => {
+            stream.on('open', () => stream.write(content));
+            stream.on('close', () => console.log('stream has been closed.'));
         });
+        return Promise.resolve(promise);
     }
 
     /**
@@ -266,10 +270,10 @@ export class LocalHistoryManager {
                         await vscode.window.showTextDocument(doc);
                         vscode.commands.executeCommand('workbench.action.closeActiveEditor');
                     });
-
-                    vscode.window.showInformationMessage(`'${path.basename(revision.fsPath)}' was deleted.`);
-                    vscode.commands.executeCommand('local-history.refreshEntry');
                 }
+
+                vscode.window.showInformationMessage(`'${path.basename(revision.fsPath)}' was deleted.`);
+                vscode.commands.executeCommand('local-history.refreshEntry');
             });
         }
     }
@@ -409,5 +413,46 @@ export class LocalHistoryManager {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Check if the revision was created before a 'revert change'.
+     */
+    public isRevertChangeRevision(uri: string): boolean {
+        const fileName = path.basename(uri);
+        const revisionContext = fileName.match('_[a-z]')![0].substring(1);
+        if (revisionContext !== 'r') {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Undo revert for an active editor if its most recent revision was created before a 'revert change'.
+     */
+    public async undoRevert(editor: vscode.TextEditor): Promise<void> {
+        if (editor) {
+            const hashedFolderPath = this.getHashedFolderPath(editor.document.fileName);
+            const mostRecentRevision = this.getMostRecentRevision(hashedFolderPath);
+            if (!mostRecentRevision || !this.isRevertChangeRevision(mostRecentRevision)) {
+                return;
+            }
+
+            const latestEditorHistoryContent: string | undefined = mostRecentRevision && await this.readFile(mostRecentRevision);
+            const activeDocumentContent: string = await this.readFile(editor.document.fileName);
+            if (latestEditorHistoryContent && (activeDocumentContent === latestEditorHistoryContent)) {
+                return;
+            }
+
+            try {
+                vscode.window.showWarningMessage(`Are you sure you want to undo the revert for '${path.basename(editor.document.fileName)}'?`, { modal: true }, 'Undo').then(async (selection) => {
+                    if (selection === 'Undo') {
+                        await this.writeFile(editor.document.fileName, latestEditorHistoryContent);
+                    }
+                });
+            } catch (err) {
+                console.warn('An error has occurred when undoing a revert', err);
+            }
+        }
     }
 }
