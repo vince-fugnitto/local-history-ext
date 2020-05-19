@@ -86,6 +86,21 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    //Triggers autocomplete for '**/.local-history' in json files
+    disposable.push(vscode.languages.registerCompletionItemProvider({ language: 'json', scheme: '*' }, {
+
+        provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken) {
+
+            // A completion item which inserts `**/.local-history`
+            const localHistorySettingCompletion = new vscode.CompletionItem('"**/.local-history/**"');
+
+            // Return all completion items as array
+            return [
+                localHistorySettingCompletion
+            ];
+        }
+    }));
+
     context.subscriptions.push(...disposable);
 
     // Tree View

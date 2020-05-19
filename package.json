@@ -166,6 +166,14 @@
                     "default": 30,
                     "minimum": 1,
                     "description": "Controls the maximum number of saved revisions allowed for a given file"
+                },
+                "local-history.excludeFiles": {
+                    "type": "object",
+                    "markdownDescription": "Configure glob patterns for excluding files and folders in fulltext searches and quick open. Inherits all glob patterns from the `Files: Exclude setting`. The glob includes `**./local-history/**` as default. Read more about glob patterns [here](https://code.visualstudio.com/docs/editor/codebasics#_advanced-search-options).",
+                    "default": {
+                        "**/.local-history/**": true
+                    },
+                    "scope": "resource"
                 }
             }
         }
@@ -195,6 +203,7 @@
         "vscode-test": "^1.2.2"
     },
     "dependencies": {
+        "minimatch": "^3.0.4",
         "moment": "2.24.0"
     }
 }

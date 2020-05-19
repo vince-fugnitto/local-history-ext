@@ -45,6 +45,16 @@ export interface HistoryFileProperties {
 export namespace Preferences {
 
     /**
+     * Exclude the local history for the files.
+     */
+    export const EXCLUDE_FILES: LocalHistoryPreference = {
+        id: 'local-history.excludeFiles',
+        default: {
+            '**/.local-history/**': true,
+        }
+    };
+
+    /**
      * Limits the maximum number of revisions saved per file.
      */
     export const FILE_LIMIT: LocalHistoryPreference = {
@@ -75,6 +85,7 @@ export namespace Preferences {
         id: 'local-history.saveDelay',
         default: 5000
     };
+
 }
 
 /**
