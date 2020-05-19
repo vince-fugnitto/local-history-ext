@@ -5,6 +5,8 @@ import { LocalHistoryPreferencesService } from './local-history-preferences-serv
 import * as os from 'os';
 import * as crypto from 'crypto';
 import * as moment from 'moment';
+import * as minimatch from 'minimatch';
+
 import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
 
 export class LocalHistoryManager {
@@ -128,7 +130,7 @@ export class LocalHistoryManager {
      * Save the current context of the active editor.
      */
     public async saveEditorContext(document: vscode.TextDocument): Promise<void> {
-        if (!this.fileSizeLimit(document)) {
+        if (!this.fileSizeLimit(document) || this.excludeFiles(document)) {
             return;
         }
 
@@ -449,4 +451,21 @@ export class LocalHistoryManager {
             .update(str, 'utf8')
             .digest('hex');
     }
+
+    /**
+     * Exclude the revisions of sources which follows the glob pattern. 
+     * @param document Represent the active text document.
+     */
+    private excludeFiles(document: vscode.TextDocument): boolean {
+        const glob = Object.keys(this.localHistoryPreferencesService.excludedFiles);
+        const documentUri = path.normalize(document.uri.fsPath);
+        for (const pattern of glob) {
+            const match = minimatch(documentUri, pattern);
+            if (match) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
+

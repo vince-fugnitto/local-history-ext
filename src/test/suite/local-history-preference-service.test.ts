@@ -62,6 +62,27 @@ mocha.suite('LocalHistoryPreferencesService', () => {
         });
     });
 
+    mocha.describe(`Preference: '${Preferences.EXCLUDE_FILES.id}'`, () => {
+        mocha.it('should return the correct default value', () => {
+            const mergedDefault: Object = {
+                '**/.DS_Store': true,
+                '**/.git': true,
+                '**/.hg': true,
+                '**/.local-history/**': true,
+                '**/.svn': true,
+                '**/CVS': true
+            };
+            const glob: Object = { '**/.local-history/**': true };
+            assert.deepEqual(glob, Preferences.EXCLUDE_FILES.default);
+            assert.deepEqual(service.excludedFiles, mergedDefault);
+        });
+        mocha.it('should properly update the value', () => {
+            const updatedValue: object = { '**/*.txt': true };
+            service.excludedFiles = updatedValue;
+            assert.equal(service.excludedFiles, updatedValue);
+        });
+    });
+
     mocha.describe('Method: getPreferenceValueById', () => {
         mocha.it(`should properly return the '${Preferences.FILE_LIMIT.id}' preference`, () => {
             assert.equal(service['getPreferenceValueById'](Preferences.FILE_LIMIT.id), Preferences.FILE_LIMIT.default);
@@ -74,6 +95,9 @@ mocha.suite('LocalHistoryPreferencesService', () => {
         });
         mocha.it(`should properly return the '${Preferences.SAVE_DELAY.id}' preference`, () => {
             assert.equal(service['getPreferenceValueById'](Preferences.SAVE_DELAY.id), Preferences.SAVE_DELAY.default);
+        });
+        mocha.it(`should properly return the '${Preferences.EXCLUDE_FILES.id}' preference`, () => {
+            assert.deepEqual(service['getPreferenceValueById'](Preferences.EXCLUDE_FILES.id), Preferences.EXCLUDE_FILES.default);
         });
     });
 
