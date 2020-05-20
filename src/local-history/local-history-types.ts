@@ -93,7 +93,9 @@ export namespace Commands {
     export const CLEAR_OLD_HISTORY = 'local-history.clearOldHistory';
     export const REMOVE_REVISION = 'local-history.removeRevision';
     export const REVERT_TO_PREVIOUS_REVISION = 'local-history.revertToPrevRevision';
+    export const TREE_DELETED_FILE = 'extension.openDeletedFile';
     export const TREE_DIFF = 'extension.openRevisionInDiff';
-    export const TREE_REFRESH = 'local-history.refreshEntry';
+    export const TREE_DELETION_REFRESH = 'local-history.refreshDeletionEntry';
+    export const TREE_REVISION_REFRESH = 'local-history.refreshRevisionEntry';
     export const VIEW_HISTORY = 'local-history.viewHistory';
 }

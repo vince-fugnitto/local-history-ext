@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as moment from 'moment';
-// eslint-disable-next-line no-unused-vars
 import { LocalHistoryManager } from './local-history-manager';
 
 export class Revision extends vscode.TreeItem {
@@ -23,7 +22,7 @@ export class Revision extends vscode.TreeItem {
     }
 }
 
-export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revision> {
+export class LocalHistoryRevisionTreeProvider implements vscode.TreeDataProvider<Revision> {
     private _onDidChangeTreeData: vscode.EventEmitter<Revision | undefined> = new vscode.EventEmitter<Revision | undefined>();
     readonly onDidChangeTreeData: vscode.Event<Revision | undefined> = this._onDidChangeTreeData.event;
     readonly manager: LocalHistoryManager;
@@ -55,9 +54,9 @@ export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revisio
     /**
      * Get all revisions for active editor
      */
-    private async getRevisionsActiveEditor(editor: string): Promise<Revision[]> {
+    private async getRevisionsActiveEditor(editorPath: string): Promise<Revision[]> {
         const revisions: Revision[] = [];
-        const hashedFolderPath = this.manager.getHashedRevisionFolderPath(editor);
+        const hashedFolderPath = this.manager.getHashedRevisionFolderPath(editorPath);
         await this.manager.loadHistory(hashedFolderPath);
         const history = this.manager.historyFilesForActiveEditor;
         history.forEach(item => {
@@ -69,4 +68,5 @@ export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revisio
         });
         return revisions;
     }
+
 }

@@ -10,12 +10,13 @@ import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, LOCA
 export class LocalHistoryManager {
 
     private _historyFilesForActiveEditor: HistoryFileProperties[] = [];
+    private _workspaceDeletedFiles: HistoryFileProperties[] = [];
     private localHistoryPreferencesService: LocalHistoryPreferencesService = new LocalHistoryPreferencesService();
 
     constructor() {
         vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
             this.saveEditorContext(document);
-            vscode.commands.executeCommand(Commands.TREE_REFRESH);
+            vscode.commands.executeCommand(Commands.TREE_REVISION_REFRESH);
         });
 
         vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
@@ -29,13 +30,31 @@ export class LocalHistoryManager {
         vscode.workspace.onWillDeleteFiles((event: vscode.FileDeleteEvent) => {
             this.storeDeletedFiles(event.files);
         });
+
+        vscode.workspace.onDidChangeWorkspaceFolders(() => {
+            vscode.commands.executeCommand(Commands.TREE_DELETION_REFRESH);
+        });
     }
 
     /**
-     * Get array for storing the local history of the active editor.
+     * Get the array that stores the local history of the active editor.
      */
     get historyFilesForActiveEditor(): HistoryFileProperties[] {
         return this._historyFilesForActiveEditor;
+    }
+
+    /**
+     * Get the array that stores the deleted files in the workspace.
+     */
+    get workspaceDeletedFiles(): HistoryFileProperties[] {
+        return this._workspaceDeletedFiles;
+    }
+
+    /**
+     * Set the array that stores the deleted files in the workspace.
+     */
+    set workspaceDeletedFiles(array: HistoryFileProperties[]) {
+        this._workspaceDeletedFiles = array;
     }
 
     /**
@@ -65,7 +84,7 @@ export class LocalHistoryManager {
     /**
      * Parse the file name of a local history file into the format for file properties.
      */
-    private parseTimestamp(fileName: string): string {
+    public parseTimestamp(fileName: string): string {
         const timestamp = fileName.match('_[^_]*')![0].substring(1);
 
         const year = timestamp.substring(0, 4);
@@ -258,7 +277,7 @@ export class LocalHistoryManager {
                     });
 
                     vscode.window.showInformationMessage(`'${path.basename(revision.fsPath)}' was deleted.`);
-                    vscode.commands.executeCommand(Commands.TREE_REFRESH);
+                    vscode.commands.executeCommand(Commands.TREE_REVISION_REFRESH);
                 }
             });
         }
@@ -287,7 +306,7 @@ export class LocalHistoryManager {
                         }
                         fs.rmdirSync(hashedFolderPath);
                         vscode.window.showInformationMessage(`All revisions for '${path.basename(uri.fsPath)}' were deleted.`);
-                        vscode.commands.executeCommand('local-history.refreshEntry');
+                        vscode.commands.executeCommand(Commands.TREE_REVISION_REFRESH);
                     }
                 });
             } catch (err) {
@@ -353,16 +372,17 @@ export class LocalHistoryManager {
      */
     public getHashedRevisionFolderPath(uri: string): string {
         const hashedEditorPath = this.checksum(uri);
-        return path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, LOCAL_HISTORY_REVISIONS_DIRNAME, hashedEditorPath);
+        return path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, LOCAL_HISTORY_REVISIONS_DIRNAME, hashedEditorPath));
     }
 
     /**
      * Returns the hashed deletion folder path of the uri.
      * @param uri the file URI.
      */
-    public getHashedDeletionFolderPath(uri: string): string {
+    private getHashedDeletionFolderPath(uri: string): string {
+        const hashedWorkspacePath = this.checksum(vscode.workspace.workspaceFolders![0].uri.fsPath);
         const hashedEditorPath = this.checksum(uri);
-        return path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, LOCAL_HISTORY_DELETION_DIRNAME, hashedEditorPath));
+        return path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, LOCAL_HISTORY_DELETION_DIRNAME, hashedWorkspacePath, hashedEditorPath));
     }
 
     /**
@@ -456,7 +476,7 @@ export class LocalHistoryManager {
         }
     }
 
-    private checksum(str: string, algorithm: string = 'md5') {
+    public checksum(str: string, algorithm: string = 'md5') {
         return crypto
             .createHash(algorithm)
             .update(str, 'utf8')

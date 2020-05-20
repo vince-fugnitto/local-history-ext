@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { LocalHistoryManager } from './local-history/local-history-manager';
-import { LocalHistoryTreeProvider } from './local-history/local-history-tree-provider';
+import { LocalHistoryRevisionTreeProvider } from './local-history/local-history-revision-tree-provider';
 import { Commands } from './local-history/local-history-types';
+import { LocalHistoryDeletionTreeProvider } from './local-history/local-history-deletion-tree-provider';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -89,11 +90,18 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(...disposable);
 
     // Tree View
-    const treeProvider = new LocalHistoryTreeProvider(manager);
-    vscode.window.registerTreeDataProvider('localHistoryTree', treeProvider);
-    vscode.commands.registerCommand(Commands.TREE_REFRESH, () => treeProvider.refresh());
+    const revisionTreeProvider = new LocalHistoryRevisionTreeProvider(manager);
+    const deletionTreeProvider = new LocalHistoryDeletionTreeProvider(manager);
+    vscode.window.registerTreeDataProvider('localHistoryRevisionTree', revisionTreeProvider);
+    vscode.window.registerTreeDataProvider('localHistoryDeletionTree', deletionTreeProvider);
+    vscode.commands.registerCommand(Commands.TREE_REVISION_REFRESH, () => revisionTreeProvider.refresh());
     vscode.commands.registerCommand(Commands.TREE_DIFF, uri =>
         manager.displayDiff(vscode.Uri.file(uri), vscode.window.activeTextEditor!.document.uri));
+
+    vscode.commands.registerCommand(Commands.TREE_DELETED_FILE, (selectionUri) =>
+        vscode.workspace.openTextDocument(selectionUri).then(doc => vscode.window.showTextDocument(doc)));
+    vscode.commands.registerCommand(Commands.TREE_DELETION_REFRESH, () => deletionTreeProvider.refresh());
+
 }
 
 export function deactivate() { }

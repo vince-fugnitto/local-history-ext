@@ -22,8 +22,12 @@
     "contributes": {
         "viewsWelcome": [
             {
-                "view": "localHistoryTree",
+                "view": "localHistoryRevisionTree",
                 "contents": "No local history found."
+            },
+            {
+                "view": "localHistoryDeletionTree",
+                "contents": "No deleted files found."
             }
         ],
         "viewsContainers": {
@@ -38,8 +42,12 @@
         "views": {
             "localHistory": [
                 {
-                    "id": "localHistoryTree",
+                    "id": "localHistoryRevisionTree",
                     "name": "Active Editor Revisions"
+                },
+                {
+                    "id": "localHistoryDeletionTree",
+                    "name": "Workspace deleted files"
                 }
             ]
         },
@@ -68,8 +76,13 @@
                 "title": "Local History: Clear Old History"
             },
             {
-                "command": "local-history.refreshEntry",
-                "title": "Local History: Refresh",
+                "command": "local-history.refreshRevisionEntry",
+                "title": "Local History: Refresh Active Editor Revision",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "local-history.refreshDeletionEntry",
+                "title": "Local History: Refresh Workspace Deleted Files",
                 "icon": "$(refresh)"
             }
         ],
@@ -119,26 +132,31 @@
             "explorer/context": [
                 {
                     "command": "local-history.viewHistory",
-                    "when": "!explorerResourceIsFolder",
+                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
                     "group": "LocalHistory@1"
                 },
                 {
                     "command": "local-history.clearHistory",
-                    "when": "!explorerResourceIsFolder",
+                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
                     "group": "LocalHistory@2"
                 }
             ],
             "view/title": [
                 {
-                    "command": "local-history.refreshEntry",
-                    "when": "view == localHistoryTree",
+                    "command": "local-history.refreshRevisionEntry",
+                    "when": "view == localHistoryRevisionTree",
+                    "group": "navigation"
+                },
+                {
+                    "command": "local-history.refreshDeletionEntry",
+                    "when": "view == localHistoryDeletionTree",
                     "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
                     "command": "local-history.removeRevision",
-                    "when": "view == localHistoryTree",
+                    "when": "view == localHistoryRevisionTree",
                     "group": "inline"
                 }
             ]
