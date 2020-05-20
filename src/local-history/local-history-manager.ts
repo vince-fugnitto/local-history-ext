@@ -275,7 +275,7 @@ export class LocalHistoryManager {
             }
 
             try {
-                vscode.window.showWarningMessage(`Are you sure you want to delete all revisions for '${path.basename(uri.fsPath)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
+                vscode.window.showWarningMessage(`Are you sure you want to permanently delete all revisions for '${path.basename(uri.fsPath)}'?`, { modal: true }, 'Delete').then((selection) => {
                     if (selection === 'Delete') {
                         const files = fs.readdirSync(hashedFolderPath);
                         for (const file of files) {
@@ -375,7 +375,7 @@ export class LocalHistoryManager {
         try {
             const folders = fs.readdirSync(dirPath);
             const currentDate = Date.now();
-            let counter: number = 0;
+            const fileUris: string[] = [];
             for (const folder of folders) {
                 const hashedFolderPath = path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, folder);
                 const files = fs.readdirSync(hashedFolderPath);
@@ -383,16 +383,23 @@ export class LocalHistoryManager {
                     const filePath = path.join(hashedFolderPath, file);
                     const mTime = fs.statSync(filePath).mtimeMs;
                     if (currentDate - mTime > days * DAY_TO_MILLISECONDS) {
-                        fs.unlinkSync(filePath);
-                        counter++;
+                        fileUris.push(filePath);
                     }
                 });
             }
-            vscode.window.showInformationMessage(
-                counter > 0
-                    ? `Successfully deleted ${counter} local-history file(s)`
-                    : `No local-history found older than ${days} day(s)`
-            );
+            if (fileUris.length) {
+                vscode.window.showWarningMessage(`Are you sure you want to permanently delete ${fileUris.length} revision(s)?`, { modal: true }, 'Delete').then((selection) => {
+                    if (selection === 'Delete') {
+                        for (const file of fileUris) {
+                            fs.unlinkSync(file);
+                        }
+                        vscode.window.showInformationMessage(`Successfully deleted ${fileUris.length} local-history file(s)`);
+                        vscode.commands.executeCommand('local-history.refreshEntry');
+                    }
+                });
+            } else {
+                vscode.window.showInformationMessage(`No local-history found older than ${days} day(s)`);
+            }
         }
         catch (err) {
             console.log(err);
