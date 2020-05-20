@@ -395,6 +395,7 @@ export class LocalHistoryManager {
                         for (const file of fileUris) {
                             fs.unlinkSync(file);
                         }
+                        this.removeEmptyFolders();
                         vscode.window.showInformationMessage(`Successfully deleted ${fileUris.length} local-history file(s)`);
                         vscode.commands.executeCommand('local-history.refreshEntry');
                     }
@@ -449,6 +450,9 @@ export class LocalHistoryManager {
             if (oldestRevision) {
                 fs.unlinkSync(oldestRevision);
             }
+            if (!fs.readdirSync(hashedPath).length) {
+                fs.rmdirSync(hashedPath);
+            }
         }
     }
 
@@ -473,6 +477,20 @@ export class LocalHistoryManager {
             }
         }
         return false;
+    }
+
+    /**
+     * Removes empty folders.
+     */
+    private removeEmptyFolders() {
+        const localHistoryDir = path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME));
+        const folders = fs.readdirSync(localHistoryDir);
+        for (const folder of folders) {
+            const folderPath = path.normalize(path.join(localHistoryDir, folder));
+            if (!fs.readdirSync(folderPath).length) {
+                fs.rmdirSync(folderPath);
+            }
+        }
     }
 }
 
