@@ -71,6 +71,10 @@
                 "command": "local-history.refreshEntry",
                 "title": "Local History: Refresh",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "local-history:viewDocumentation",
+                "title": "Local History: View Documentation"
             }
         ],
         "menus": {

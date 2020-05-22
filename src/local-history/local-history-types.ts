@@ -98,5 +98,6 @@ export namespace Commands {
     export const REVERT_TO_PREVIOUS_REVISION = 'local-history.revertToPrevRevision';
     export const TREE_DIFF = 'extension.openRevisionInDiff';
     export const TREE_REFRESH = 'local-history.refreshEntry';
+    export const VIEW_DOCUMENTATION = 'local-history:viewDocumentation';
     export const VIEW_HISTORY = 'local-history.viewHistory';
 }

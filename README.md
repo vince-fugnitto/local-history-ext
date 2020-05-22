@@ -13,6 +13,12 @@
 
 The **Local History** extension manages local revisions of a file independently of source control providers, and allows users to easily view, track, and restore files based on previous checkpoints. The extension is particularly useful for disaster recovery.
 
+### Documentation
+
+- #### Commands
+
+- #### Preferences
+
 ### Development
 
 - [QuickStart](./vsc-extension-quickstart.md)
