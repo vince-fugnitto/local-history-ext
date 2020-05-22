@@ -11,6 +11,7 @@ export class LocalHistoryManager {
 
     private _historyFilesForActiveEditor: HistoryFileProperties[] = [];
     private _workspaceDeletedFiles: HistoryFileProperties[] = [];
+    private _filesInDeletedFolder: vscode.Uri[] = [];
     private localHistoryPreferencesService: LocalHistoryPreferencesService = new LocalHistoryPreferencesService();
 
     constructor() {
@@ -483,25 +484,69 @@ export class LocalHistoryManager {
             .digest('hex');
     }
 
+    private async isAFolder(uri: vscode.Uri): Promise<boolean> {
+        let dirContainsFiles: boolean = true;
+        for (const [name, type] of await vscode.workspace.fs.readDirectory(uri)) {
+            if (type === vscode.FileType.File) {
+                break;
+            } else if (type === vscode.FileType.Directory) {
+                dirContainsFiles = false;
+                break;
+            }
+        }
+        return dirContainsFiles;
+    }
+
     /**
      * Tracks the deleted files.
      * @param files array of all the deleted file(s) uri.
      */
     private async storeDeletedFiles(files: ReadonlyArray<vscode.Uri>) {
-
         for (const file of files) {
-            const hashedFolderPath = this.getHashedDeletionFolderPath(file.fsPath);
-            if (!fs.existsSync(hashedFolderPath)) {
-                fs.mkdirSync(hashedFolderPath, { recursive: true });
+            ///
+            console.log(file.fsPath);
+
+            const isAFolderPath = await this.isAFolder(file);
+
+            if (isAFolderPath === false) {
+                const hashedFolderPath = this.getHashedDeletionFolderPath(file.fsPath);
+                if (!fs.existsSync(hashedFolderPath)) {
+                    fs.mkdirSync(hashedFolderPath, { recursive: true });
+                }
+                const filename = path.parse(file.fsPath).base;
+                const filePath = path.join(hashedFolderPath, filename);
+                try {
+                    const fileContent = await this.readFile(file.fsPath);
+                    await this.writeFile(filePath, fileContent, false);
+                }
+                catch (err) {
+                    console.log(err);
+                }
+            } else {
+                ///
+                console.log('folder detected');
+
+                this._filesInDeletedFolder = [];
+                await this.readDeletedFolderRec(vscode.Uri.file(file.fsPath));
+                await this.storeDeletedFiles(this._filesInDeletedFolder);
             }
-            const filename = path.parse(file.fsPath).base;
-            const filePath = path.join(hashedFolderPath, filename);
-            try {
-                const fileContent = await this.readFile(file.fsPath);
-                await this.writeFile(filePath, fileContent, false);
-            }
-            catch (err) {
-                console.log(err);
+        }
+    }
+
+    /**
+     * Tracks the deleted folder.
+     * @param folderUri the uri of the deleted folder.
+     */
+    private async readDeletedFolderRec(folderUri: vscode.Uri): Promise<void> {
+        for (const [name, type] of await vscode.workspace.fs.readDirectory(vscode.Uri.file(folderUri.fsPath))) {
+            if (type === vscode.FileType.File) {
+                ///
+                console.log('deleting file: ' + name);
+
+                this._filesInDeletedFolder.push(vscode.Uri.file(path.join(folderUri.fsPath, name)));
+            } else {
+                const childFolderUri = folderUri.with({ path: path.join(folderUri.fsPath, name) });
+                await this.readDeletedFolderRec(childFolderUri);
             }
         }
     }
