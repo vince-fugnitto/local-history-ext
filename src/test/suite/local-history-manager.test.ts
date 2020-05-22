@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as mocha from 'mocha';
 import * as vscode from 'vscode';
 import { LocalHistoryManager } from '../../local-history/local-history-manager';
+import { MockTextDocument } from './mock-text-document';
 
 mocha.suite('LocalHistoryManager', () => {
 
@@ -18,6 +19,33 @@ mocha.suite('LocalHistoryManager', () => {
             const b: string = 'foobar_19940311081234_100.ts';
             assert.equal(manager['parseTimestamp'](a), '2020-05-08 15:39:53');
             assert.equal(manager['parseTimestamp'](b), '1994-03-11 08:12:34');
+        });
+    });
+
+    mocha.describe('Method: isFileExcluded', () => {
+        mocha.it('it should properly exclude `.local-history` files', async () => {
+            const uri = vscode.Uri.parse('.local-history/a/a.ts');
+            const document: MockTextDocument = new MockTextDocument(uri, '');
+            const match = manager['isFileExcluded'](document);
+            assert.equal(match, true);
+        });
+        mocha.it('it should properly exclude nested `.local-history` files', async () => {
+            const uri = vscode.Uri.parse('.local-history/a/b/c/a.ts');
+            const document: MockTextDocument = new MockTextDocument(uri, '');
+            const match = manager['isFileExcluded'](document);
+            assert.equal(match, true);
+        });
+        mocha.it('it should properly exclude `.local-history` files as a subdirectory', async () => {
+            const uri = vscode.Uri.parse('foo/bar/.local-history/a.ts');
+            const document: MockTextDocument = new MockTextDocument(uri, '');
+            const match = manager['isFileExcluded'](document);
+            assert.equal(match, true);
+        });
+        mocha.it('it should return `false` for files which are not excluded', async () => {
+            const uri = vscode.Uri.parse('foo/bar/a.ts');
+            const document: MockTextDocument = new MockTextDocument(uri, '');
+            const match = manager['isFileExcluded'](document);
+            assert.equal(match, false);
         });
     });
 

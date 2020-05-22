@@ -130,7 +130,7 @@ export class LocalHistoryManager {
      * Save the current context of the active editor.
      */
     public async saveEditorContext(document: vscode.TextDocument): Promise<void> {
-        if (!this.fileSizeLimit(document) || this.excludeFiles(document)) {
+        if (!this.fileSizeLimit(document) || this.isFileExcluded(document)) {
             return;
         }
 
@@ -464,10 +464,10 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Exclude the revisions of sources which follows the glob pattern. 
+     * Exclude the revisions of sources which follows the glob pattern.
      * @param document Represent the active text document.
      */
-    private excludeFiles(document: vscode.TextDocument): boolean {
+    private isFileExcluded(document: vscode.TextDocument): boolean {
         const glob = Object.keys(this.localHistoryPreferencesService.excludedFiles);
         const documentUri = path.normalize(document.uri.fsPath);
         for (const pattern of glob) {
