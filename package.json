@@ -108,12 +108,12 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "local-history.undoRevert",
+                    "command": "local-history.removeRevision",
                     "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
                     "group": "navigation@2"
                 },
                 {
-                    "command": "local-history.removeRevision",
+                    "command": "local-history.undoRevert",
                     "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
                     "group": "navigation@3"
                 }

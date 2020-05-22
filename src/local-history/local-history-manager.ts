@@ -213,7 +213,7 @@ export class LocalHistoryManager {
             try {
                 await this.saveEditorContext(current.document, true);
                 const fileContent = await this.readFile(previous.document.fileName);
-                await this.writeFile(current.document.fileName, fileContent);
+                await this.writeFile(current.document.fileName, fileContent, true);
                 vscode.commands.executeCommand('local-history.refreshEntry');
             } catch (err) {
                 console.warn('An error has occurred when reverting to previous revision', err);
@@ -239,9 +239,16 @@ export class LocalHistoryManager {
      * Writes the content to a file.
      * @param uri: the target uri for the new file.
      * @param content: the data to be stored in the file
+     * @param disableReadonly: guard to prevent the function from making the file into read-only for 'Revert' and 'Undo revert'  
      */
-    private writeFile(uri: string, content: string): Promise<string> {
-        const stream = fs.createWriteStream(uri, { mode: fs.constants.O_RDONLY, emitClose: true });
+    private writeFile(uri: string, content: string, disableReadonly?: boolean): Promise<string> {
+        let stream: fs.WriteStream;
+        if (disableReadonly) {
+            stream = fs.createWriteStream(uri, { emitClose: true });
+        } else {
+            stream = fs.createWriteStream(uri, { mode: fs.constants.O_RDONLY, emitClose: true });
+        }
+
         // Write the content of the file.
         const promise: Promise<string> = new Promise(() => {
             stream.on('open', () => stream.write(content));
@@ -447,7 +454,7 @@ export class LocalHistoryManager {
             try {
                 vscode.window.showWarningMessage(`Are you sure you want to undo the revert for '${path.basename(editor.document.fileName)}'?`, { modal: true }, 'Undo').then(async (selection) => {
                     if (selection === 'Undo') {
-                        await this.writeFile(editor.document.fileName, latestEditorHistoryContent);
+                        await this.writeFile(editor.document.fileName, latestEditorHistoryContent, true);
                     }
                 });
             } catch (err) {
