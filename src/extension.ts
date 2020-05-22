@@ -19,7 +19,6 @@ export function activate(context: vscode.ExtensionContext) {
                 uri = vscode.window.activeTextEditor!.document.uri;
             }
             manager.viewHistory(uri);
-
         })
     );
 
@@ -86,7 +85,7 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    //Triggers autocomplete for '**/.local-history' in json files
+    // Triggers autocomplete for '**/.local-history' in json files
     disposable.push(vscode.languages.registerCompletionItemProvider({ language: 'json', scheme: '*' }, {
 
         provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken) {
@@ -99,6 +98,11 @@ export function activate(context: vscode.ExtensionContext) {
                 localHistorySettingCompletion
             ];
         }
+    }));
+
+    // Triggers opening the external documentation link.
+    disposable.push(vscode.commands.registerCommand(Commands.VIEW_DOCUMENTATION, () => {
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://github.com/vince-fugnitto/local-history-ext#documentation'));
     }));
 
     context.subscriptions.push(...disposable);
