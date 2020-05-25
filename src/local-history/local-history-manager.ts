@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import * as minimatch from 'minimatch';
 
 import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
+import { OutputManager } from './local-history-output-manager';
 
 export class LocalHistoryManager {
 
@@ -56,7 +57,7 @@ export class LocalHistoryManager {
                 }
             }
         } catch (err) {
-            console.warn(`An error has occurred when reading the ${LOCAL_HISTORY_DIRNAME} directory`, err);
+            OutputManager.appendWarningMessage([`An error has occurred when reading the ${LOCAL_HISTORY_DIRNAME} directory`, err]);
         }
     }
 
@@ -170,7 +171,7 @@ export class LocalHistoryManager {
             await this.writeFile(historyFilePath, activeDocumentContent, true);
         }
         catch (err) {
-            console.warn('An error has occurred when saving the active editor content', err);
+            OutputManager.appendWarningMessage(['An error has occurred when saving the active editor content', err]);
         }
     }
 
@@ -193,7 +194,7 @@ export class LocalHistoryManager {
                 const fileContent = await this.readFile(previous.document.fileName);
                 await this.writeFile(current.document.fileName, fileContent, false);
             } catch (err) {
-                console.warn('An error has occurred when reverting to previous revision', err);
+                OutputManager.appendWarningMessage(['An error has occurred when reverting to previous revision', err]);
             }
         }
     }
@@ -227,7 +228,7 @@ export class LocalHistoryManager {
                 // Change file permission to read-only.
                 fs.chmod(uri, 0o400, (err) => {
                     if (err) {
-                        console.warn(err);
+                        OutputManager.appendWarningMessage(err.message);
                     }
                 });
             }
@@ -242,7 +243,7 @@ export class LocalHistoryManager {
             // Remove the revision.
             fs.unlink(revision.fsPath, (err) => {
                 if (err) {
-                    console.warn('An error has occurred when removing the revision', err.message);
+                    OutputManager.appendWarningMessage('An error has occurred when removing the revision');
                     return;
                 }
 
@@ -289,7 +290,7 @@ export class LocalHistoryManager {
                     }
                 });
             } catch (err) {
-                console.warn(`An error has occurred when removing all the revision for ${path.basename(uri.fsPath)}`, err.message);
+                OutputManager.appendWarningMessage([`An error has occurred when removing all the revision for ${path.basename(uri.fsPath)}`, err.message]);
             }
         }
     }
@@ -405,7 +406,7 @@ export class LocalHistoryManager {
             }
         }
         catch (err) {
-            console.log(err);
+            OutputManager.appendErrorMessage(err.toString());
         }
     }
 
@@ -434,7 +435,7 @@ export class LocalHistoryManager {
                 return true;
             }
         } catch (err) {
-            console.log(err);
+            OutputManager.appendErrorMessage(err.toString());
         }
         return false;
     }
@@ -493,4 +494,3 @@ export class LocalHistoryManager {
         }
     }
 }
-
