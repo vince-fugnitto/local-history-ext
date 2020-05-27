@@ -123,12 +123,12 @@
             "explorer/context": [
                 {
                     "command": "local-history.viewHistory",
-                    "when": "!explorerResourceIsFolder",
+                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
                     "group": "LocalHistory@1"
                 },
                 {
                     "command": "local-history.clearHistory",
-                    "when": "!explorerResourceIsFolder",
+                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
                     "group": "LocalHistory@2"
                 }
             ],

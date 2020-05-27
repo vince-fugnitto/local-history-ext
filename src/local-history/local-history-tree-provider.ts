@@ -55,10 +55,10 @@ export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revisio
     /**
      * Get all revisions for active editor
      */
-    private async getRevisionsActiveEditor(editor: string): Promise<Revision[]> {
+    private async getRevisionsActiveEditor(editorPath: string): Promise<Revision[]> {
         const revisions: Revision[] = [];
-        const hashedFolderPath = this.manager.getHashedFolderPath(editor);
-        await this.manager.loadHistory(hashedFolderPath);
+        const revisionFolderPath = this.manager.getRevisionFolderPath(editorPath);
+        await this.manager.loadHistory(revisionFolderPath);
         const history = this.manager.historyFilesForActiveEditor;
         history.forEach(item => {
             revisions.push(new Revision(item.timestamp, item.uri, {

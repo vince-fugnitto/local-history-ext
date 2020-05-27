@@ -42,14 +42,14 @@ export function activate(context: vscode.ExtensionContext) {
             const editors = vscode.window.visibleTextEditors;
             if (editors && editors.length === 2) {
                 // Diff is opened, click 'Remove revision' either from diff toolbar or tree-view
-                vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(editors[0].document.fileName)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
+                vscode.window.showWarningMessage(`Are you sure you want to permanently delete '${path.basename(editors[0].document.fileName)}'?`, { modal: true }, 'Delete').then((selection) => {
                     if (selection === 'Delete') {
                         manager.removeRevision(editors[0].document.uri, true);
                     }
                 });
             } else if (revision) {
                 // No diff opened, click 'Remove revision' from tree-view
-                vscode.window.showWarningMessage(`Are you sure you want to delete '${path.basename(revision.uri)}' permanently?`, { modal: true }, 'Delete').then((selection) => {
+                vscode.window.showWarningMessage(`Are you sure you want to permanently delete '${path.basename(revision.uri)}'?`, { modal: true }, 'Delete').then((selection) => {
                     if (selection === 'Delete') {
                         manager.removeRevision(vscode.Uri.file(revision.uri));
                     }
