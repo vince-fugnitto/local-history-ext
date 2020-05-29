@@ -5,6 +5,7 @@ import { LocalHistoryPreferencesService } from './local-history-preferences-serv
 import * as os from 'os';
 import * as moment from 'moment';
 import * as minimatch from 'minimatch';
+import { TextDecoder, TextEncoder } from 'util';
 
 import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
 import { OutputManager } from './local-history-output-manager';
@@ -150,7 +151,7 @@ export class LocalHistoryManager {
             const activeDocumentContent: string = await this.readFile(document.fileName);
             const mostRecentRevision = this.getMostRecentRevision(revisionFolderPath);
             if (mostRecentRevision) {
-                const mostRecentRevisionContent: string | undefined = mostRecentRevision && await this.readFile(mostRecentRevision);
+                const mostRecentRevisionContent: string = await this.readFile(mostRecentRevision);
                 if (this.historyFileTimeDifference(document) && mostRecentRevisionContent && !(activeDocumentContent === mostRecentRevisionContent)) {
                     if (!this.checkRevisionLimit(document)) {
                         await this.writeFile(historyFilePath, activeDocumentContent, true);
@@ -200,37 +201,32 @@ export class LocalHistoryManager {
     /**
      * Reads the contents of the file.
      * @param uri: the uri of the file to be read.
-     * @param encoding: the required conversion of data received by the stream.
      */
-    private readFile(uri: string, encoding = 'utf8'): Promise<string> {
-        const readStream = fs.createReadStream(uri, { encoding });
-        return new Promise((resolve) => {
-            let data = '';
-            readStream.on('data', chunk => data += chunk);
-            readStream.on('end', () => resolve(data));
-        });
+    private async readFile(uri: string | vscode.Uri): Promise<string> {
+        const fileUri: vscode.Uri = typeof uri === 'string' ? vscode.Uri.file(uri) : uri;
+        const content: Uint8Array = await vscode.workspace.fs.readFile(fileUri);
+        return new TextDecoder().decode(content);
     }
 
     /**
      * Writes the content to a file.
      * @param uri: the target uri for the new file.
-     * @param content: the data to be stored in the file
+     * @param content: the data to be stored in the file.
+     * @param isReadonly: controls whether to modify the file as 'readonly'.
      */
-    private writeFile(uri: string, content: string, changePermission: boolean): Promise<string> {
-        const writeStream = fs.createWriteStream(uri);
-        return new Promise((resolve) => {
-            writeStream.on('open', () => writeStream.write(content));
-            writeStream.on('end', () => resolve());
+    private async writeFile(uri: string | vscode.Uri, content: string, isReadonly: boolean): Promise<void> {
+        const fileUri: vscode.Uri = typeof uri === 'string' ? vscode.Uri.file(uri) : uri;
+        const encodedContent = new TextEncoder().encode(content);
+        await vscode.workspace.fs.writeFile(fileUri, encodedContent);
 
-            if (changePermission) {
-                // Change file permission to read-only.
-                fs.chmod(uri, 0o400, (err) => {
-                    if (err) {
-                        OutputManager.appendWarningMessage(err.message);
-                    }
-                });
-            }
-        });
+        if (isReadonly) {
+            // Change file permission to read-only.
+            fs.chmod(typeof uri === 'string' ? uri : uri.fsPath, 0o400, (err) => {
+                if (err) {
+                    OutputManager.appendWarningMessage(err.message);
+                }
+            });
+        }
     }
 
     /**
