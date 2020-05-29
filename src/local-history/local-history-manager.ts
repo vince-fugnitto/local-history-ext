@@ -8,6 +8,7 @@ import * as minimatch from 'minimatch';
 
 import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
 import { OutputManager } from './local-history-output-manager';
+import { FilesystemService } from './filesystem-service';
 
 export class LocalHistoryManager {
 
@@ -147,26 +148,26 @@ export class LocalHistoryManager {
         try {
             const historyFilePath = path.join(revisionFolderPath, historyFileName);
             // Copy the content of the current active editor.
-            const activeDocumentContent: string = await this.readFile(document.fileName);
+            const activeDocumentContent: string = await FilesystemService.readFile(document.fileName);
             const mostRecentRevision = this.getMostRecentRevision(revisionFolderPath);
             if (mostRecentRevision) {
-                const mostRecentRevisionContent: string | undefined = mostRecentRevision && await this.readFile(mostRecentRevision);
+                const mostRecentRevisionContent: string | undefined = mostRecentRevision && await FilesystemService.readFile(mostRecentRevision);
                 if (this.historyFileTimeDifference(document) && mostRecentRevisionContent && !(activeDocumentContent === mostRecentRevisionContent)) {
                     if (!this.checkRevisionLimit(document)) {
-                        await this.writeFile(historyFilePath, activeDocumentContent, true);
+                        await FilesystemService.writeFile(historyFilePath, activeDocumentContent, true);
                         return;
                     }
                 }
                 else {
                     fs.renameSync(mostRecentRevision, historyFilePath);
-                    await this.writeFile(historyFilePath, activeDocumentContent, true);
+                    await FilesystemService.writeFile(historyFilePath, activeDocumentContent, true);
                     return;
                 }
                 if (this.checkRevisionLimit(document)) {
                     this.removeOldestRevision(document);
                 }
             }
-            await this.writeFile(historyFilePath, activeDocumentContent, true);
+            await FilesystemService.writeFile(historyFilePath, activeDocumentContent, true);
         }
         catch (err) {
             OutputManager.appendWarningMessage(['An error has occurred when saving the active editor content', err]);
@@ -189,48 +190,12 @@ export class LocalHistoryManager {
     public async revertToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): Promise<void> {
         if (current && previous) {
             try {
-                const fileContent = await this.readFile(previous.document.fileName);
-                await this.writeFile(current.document.fileName, fileContent, false);
+                const fileContent = await FilesystemService.readFile(previous.document.fileName);
+                await FilesystemService.writeFile(current.document.fileName, fileContent, false);
             } catch (err) {
                 OutputManager.appendWarningMessage(['An error has occurred when reverting to previous revision', err]);
             }
         }
-    }
-
-    /**
-     * Reads the contents of the file.
-     * @param uri: the uri of the file to be read.
-     * @param encoding: the required conversion of data received by the stream.
-     */
-    private readFile(uri: string, encoding = 'utf8'): Promise<string> {
-        const readStream = fs.createReadStream(uri, { encoding });
-        return new Promise((resolve) => {
-            let data = '';
-            readStream.on('data', chunk => data += chunk);
-            readStream.on('end', () => resolve(data));
-        });
-    }
-
-    /**
-     * Writes the content to a file.
-     * @param uri: the target uri for the new file.
-     * @param content: the data to be stored in the file
-     */
-    private writeFile(uri: string, content: string, changePermission: boolean): Promise<string> {
-        const writeStream = fs.createWriteStream(uri);
-        return new Promise((resolve) => {
-            writeStream.on('open', () => writeStream.write(content));
-            writeStream.on('end', () => resolve());
-
-            if (changePermission) {
-                // Change file permission to read-only.
-                fs.chmod(uri, 0o400, (err) => {
-                    if (err) {
-                        OutputManager.appendWarningMessage(err.message);
-                    }
-                });
-            }
-        });
     }
 
     /**
