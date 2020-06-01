@@ -65,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command which removes old revisions.
     disposable.push(
-        vscode.commands.registerCommand(Commands.CLEAR_OLD_HISTORY, async () => {
+        vscode.commands.registerCommand(Commands.CLEAR_HISTORY_WORKSPACE, async () => {
             const days = await vscode.window.showInputBox({
                 placeHolder: 'Please enter the amount of days',
                 validateInput: input => {
@@ -74,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             });
             if (days) {
-                manager.removeOldFiles(parseInt(days));
+                manager.removeHistoryFromWorkspace(parseInt(days));
             }
         })
     );
