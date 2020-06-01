@@ -30,6 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showWarningMessage(`Are you sure you want to revert '${path.basename(editors[1].document.fileName)}' to its previous state?`, { modal: true }, 'Revert').then((selection) => {
                     if (selection === 'Revert') {
                         manager.revertToPrevRevision(editors[0], editors[1]);
+                        vscode.commands.executeCommand(Commands.TREE_REFRESH);
                     }
                 });
             }

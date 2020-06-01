@@ -129,7 +129,7 @@ export class LocalHistoryManager {
     /**
      * Save the current context of the active editor.
      */
-    public async saveEditorContext(document: vscode.TextDocument): Promise<void> {
+    public async saveEditorContext(document: vscode.TextDocument, isRevertChange?: boolean): Promise<void> {
         if (!this.fileSizeLimit(document) || this.isFileExcluded(document)) {
             return;
         }
@@ -137,7 +137,10 @@ export class LocalHistoryManager {
         const timestamp = this.getCurrentTime();
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
-        const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}${fileFullPath.ext}`;
+        // Revision was created either before a revert change 'r' or after a manual change 'm'
+        const revisionContext = isRevertChange ? 'r' : 'm';
+        const historyFileName = `${fileFullPath.name}_${timestampForFileName.substring(0, 14)}_${timestampForFileName.substring(14, 17)}_${revisionContext}${fileFullPath.ext}`;
+
         const revisionFolderPath = this.getRevisionFolderPath(document.fileName);
 
         // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
@@ -150,8 +153,8 @@ export class LocalHistoryManager {
             // Copy the content of the current active editor.
             const activeDocumentContent: string = await this.readFile(document.fileName);
             const mostRecentRevision = this.getMostRecentRevision(revisionFolderPath);
-            if (mostRecentRevision) {
-                const mostRecentRevisionContent: string = await this.readFile(mostRecentRevision);
+            if (!isRevertChange && mostRecentRevision) {
+                const mostRecentRevisionContent: string | undefined = mostRecentRevision && await this.readFile(mostRecentRevision);
                 if (this.historyFileTimeDifference(document) && mostRecentRevisionContent && !(activeDocumentContent === mostRecentRevisionContent)) {
                     if (!this.checkRevisionLimit(document)) {
                         await this.writeFile(historyFilePath, activeDocumentContent, true);
@@ -185,11 +188,20 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Revert the current active editor to its previous revision.
+     * Revert the current active editor to one of its previous revision.
      */
     public async revertToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): Promise<void> {
         if (current && previous) {
+            const revisionContent: string | undefined = await this.readFile(previous.document.fileName);
+            const activeDocumentContent: string = await this.readFile(current.document.fileName);
+            if (revisionContent && (activeDocumentContent === revisionContent)) {
+                // Prevent user from reverting to the same revision more than once.
+                // Prevent duplicate 'revert change' revision.
+                return;
+            }
+
             try {
+                await this.saveEditorContext(current.document, true);
                 const fileContent = await this.readFile(previous.document.fileName);
                 await this.writeFile(current.document.fileName, fileContent, false);
             } catch (err) {
