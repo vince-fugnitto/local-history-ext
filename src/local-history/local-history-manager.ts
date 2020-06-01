@@ -7,7 +7,9 @@ import * as moment from 'moment';
 import * as minimatch from 'minimatch';
 import { TextDecoder, TextEncoder } from 'util';
 import * as deleteEmpty from 'delete-empty';
-import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
+import * as findRemoveSync from 'find-remove';
+
+import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands, WorkspaceQuickPickItem } from './local-history-types';
 import { OutputManager } from './local-history-output-manager';
 import * as shelljs from 'shelljs';
 
@@ -413,48 +415,48 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Removes all history files which are last modified @param days ago.
-     * @param days The number of days.
+     * Clears history files that are last modified @param days ago for the selected workspace.
+     * @param days the number of days to clear from. 
      */
-    public removeOldFiles(days: number): void {
-        const dirPath = path.join(os.homedir(), LOCAL_HISTORY_DIRNAME);
-        if (!fs.existsSync(dirPath)) {
+    public removeHistoryFromWorkspace(days: number): void {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length <= 0) {
             return;
         }
-        try {
-            const folders = fs.readdirSync(dirPath);
-            const currentDate = Date.now();
-            const fileUris: string[] = [];
-            for (const folder of folders) {
-                const revisionFolderPath = path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, folder);
-                const files = fs.readdirSync(revisionFolderPath);
-                files.filter((file) => {
-                    const filePath = path.join(revisionFolderPath, file);
-                    const mTime = fs.statSync(filePath).mtimeMs;
-                    if (currentDate - mTime > days * DAY_TO_MILLISECONDS) {
-                        fileUris.push(filePath);
-                    }
-                });
+        const workspaces: WorkspaceQuickPickItem[] = workspaceFolders.map(workspace => ({
+            label: workspace.name,
+            description: workspace.uri.fsPath,
+            uri: workspace.uri,
+        }));
+        vscode.window.showQuickPick(workspaces, {
+            placeHolder: 'Please select a workspace for clearing older history files.',
+            matchOnDescription: true
+        }).then((selection) => {
+            if (!selection) {
+                return;
             }
-            if (fileUris.length) {
-                vscode.window.showWarningMessage(`Are you sure you want to permanently delete ${fileUris.length} revision(s)?`, { modal: true }, 'Delete').then((selection) => {
-                    if (selection === 'Delete') {
-                        for (const file of fileUris) {
-                            fs.unlinkSync(file);
-                        }
-                        OutputManager.appendInfoMessage(`All revision files older than ${days} has been deleted.`);
-                        this.removeEmptyFolders();
-                        vscode.window.showInformationMessage(`Successfully deleted ${fileUris.length} local-history file(s).`);
+            const workspaceRevisionPath = this.getRevisionFolderPath(selection.description!);
+            if (!fs.existsSync(workspaceRevisionPath)) {
+                vscode.window.showInformationMessage(`No local history found for '${path.basename(selection.description!)}'`);
+                return;
+            }
+            try {
+                vscode.window.showWarningMessage(`Are you sure you want to permanently delete revision(s) older than ${days} day(s)?`, { modal: true }, 'Delete').then(async (promptSelection) => {
+                    if (promptSelection === 'Delete') {
+                        const age = days * DAY_TO_MILLISECONDS / 1000;
+                        const deletedFiles = findRemoveSync(workspaceRevisionPath, { files: '*.*', age: { seconds: age } });
+                        const deletedFilesCount = Object.keys(deletedFiles).length;
+                        this.removeEmptyFoldersRec(selection.uri);
+                        vscode.window.showInformationMessage(deletedFilesCount > 0 ? `Successfully deleted ${deletedFilesCount} revision(s) older than ${days} day(s) in selected workspace revision folder.` : `No revisions older than ${days} day(s) were found for the selected workspace.`);
+                        OutputManager.appendInfoMessage(deletedFilesCount > 0 ? `Successfully deleted ${deletedFilesCount} revision(s) older than ${days} day(s) for workspace ${selection.label}.` : `No revisions older than ${days} day(s) were found for the workspace ${selection.label}.`);
                         vscode.commands.executeCommand(Commands.TREE_REFRESH);
                     }
                 });
-            } else {
-                vscode.window.showInformationMessage(`No local-history found older than ${days} day(s).`);
             }
-        }
-        catch (err) {
-            OutputManager.appendErrorMessage(err.toString());
-        }
+            catch (err) {
+                OutputManager.appendErrorMessage(err.toString());
+            }
+        });
     }
 
     /**
@@ -521,20 +523,6 @@ export class LocalHistoryManager {
             }
         }
         return false;
-    }
-
-    /**
-     * Removes empty folders.
-     */
-    private removeEmptyFolders() {
-        const localHistoryDir = path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME));
-        const folders = fs.readdirSync(localHistoryDir);
-        for (const folder of folders) {
-            const folderPath = path.normalize(path.join(localHistoryDir, folder));
-            if (!fs.readdirSync(folderPath).length) {
-                fs.rmdirSync(folderPath);
-            }
-        }
     }
 
     /**

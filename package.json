@@ -64,8 +64,8 @@
                 "title": "Local History: Clear History"
             },
             {
-                "command": "local-history.clearOldHistory",
-                "title": "Local History: Clear Old History"
+                "command": "local-history.clearHistoryWorkspace",
+                "title": "Local History: Clear History (Workspace)"
             },
             {
                 "command": "local-history.refreshEntry",
@@ -107,7 +107,7 @@
                     "when": "editorIsOpen && resourceScheme == file"
                 },
                 {
-                    "command": "local-history.clearOldHistory",
+                    "command": "local-history.clearHistoryWorkspace",
                     "when": "workspaceFolderCount"
                 },
                 {
@@ -241,6 +241,7 @@
         "@typescript-eslint/parser": "^2.25.0",
         "eslint": "^6.8.0",
         "eslint-config-google": "^0.14.0",
+        "find-remove": "^2.0.1",
         "glob": "^7.1.5",
         "mocha": "^6.2.2",
         "tslint": "^5.20.0",

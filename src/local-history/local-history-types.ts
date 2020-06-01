@@ -1,3 +1,5 @@
+import * as vscode from 'vscode';
+
 /**
  * The number of milliseconds in a day.
  */
@@ -93,7 +95,7 @@ export namespace Preferences {
  */
 export namespace Commands {
     export const CLEAR_HISTORY = 'local-history.clearHistory';
-    export const CLEAR_OLD_HISTORY = 'local-history.clearOldHistory';
+    export const CLEAR_HISTORY_WORKSPACE = 'local-history.clearHistoryWorkspace';
     export const REMOVE_REVISION = 'local-history.removeRevision';
     export const COPY_REVISION_PATH = 'local-history.copyRevisionPath';
     export const COPY_REVISION_PATH_WORKSPACE = 'local-history.copyRevisionPathWorkspace';
@@ -102,4 +104,11 @@ export namespace Commands {
     export const TREE_REFRESH = 'local-history.refreshEntry';
     export const VIEW_DOCUMENTATION = 'local-history:viewDocumentation';
     export const VIEW_HISTORY = 'local-history.viewHistory';
+}
+
+export interface WorkspaceQuickPickItem extends vscode.QuickPickItem {
+    /**
+     * The workspace URI.
+     */
+    uri: vscode.Uri;
 }
