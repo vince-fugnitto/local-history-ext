@@ -95,6 +95,8 @@ export namespace Commands {
     export const CLEAR_HISTORY = 'local-history.clearHistory';
     export const CLEAR_OLD_HISTORY = 'local-history.clearOldHistory';
     export const REMOVE_REVISION = 'local-history.removeRevision';
+    export const COPY_REVISION_PATH = 'local-history.copyRevisionPath';
+    export const COPY_REVISION_PATH_WORKSPACE = 'local-history.copyRevisionPathWorkspace';
     export const REVERT_TO_PREVIOUS_REVISION = 'local-history.revertToPrevRevision';
     export const TREE_DIFF = 'extension.openRevisionInDiff';
     export const TREE_REFRESH = 'local-history.refreshEntry';

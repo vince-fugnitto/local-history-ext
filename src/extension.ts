@@ -12,8 +12,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Instantiate a new local history manager.
     const manager: LocalHistoryManager = new LocalHistoryManager();
 
+    // Command which displays the local history of the active file.
     disposable.push(
-        // Displays the local history of the active file.
         vscode.commands.registerCommand(Commands.VIEW_HISTORY, (uri: vscode.Uri) => {
             if (uri === undefined) {
                 uri = vscode.window.activeTextEditor!.document.uri;
@@ -104,6 +104,30 @@ export function activate(context: vscode.ExtensionContext) {
     disposable.push(vscode.commands.registerCommand(Commands.VIEW_DOCUMENTATION, () => {
         vscode.commands.executeCommand('vscode.open', vscode.Uri.parse('https://github.com/vince-fugnitto/local-history-ext#documentation'));
     }));
+
+    // Command which writes the revision path of the active editor into the clipboard.
+    disposable.push(
+        vscode.commands.registerCommand(Commands.COPY_REVISION_PATH, (uri: vscode.Uri) => {
+            if (uri === undefined) {
+                uri = vscode.window.activeTextEditor!.document.uri;
+            }
+
+            manager.copyRevisionPath(uri);
+        })
+    );
+
+    // Command which writes the revision path of the given workspace into the clipboard.
+    disposable.push(
+        vscode.commands.registerCommand(Commands.COPY_REVISION_PATH_WORKSPACE, (uri: vscode.Uri) => {
+            if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
+                return;
+            } else if (uri === undefined) {
+                uri = vscode.workspace.workspaceFolders![0].uri;
+            }
+
+            manager.copyRevisionPathWorkspace(uri);
+        })
+    );
 
     context.subscriptions.push(...disposable);
 
