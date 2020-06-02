@@ -75,6 +75,14 @@
             {
                 "command": "local-history:viewDocumentation",
                 "title": "Local History: View Documentation"
+            },
+            {
+                "command": "local-history.copyRevisionPath",
+                "title": "Local History: Copy Revision Path"
+            },
+            {
+                "command": "local-history.copyRevisionPathWorkspace",
+                "title": "Local History: Copy Revision Path (Workspace)"
             }
         ],
         "menus": {
@@ -94,6 +102,18 @@
                 {
                     "command": "local-history.clearHistory",
                     "when": "editorIsOpen && resourceScheme == file"
+                },
+                {
+                    "command": "local-history.clearOldHistory",
+                    "when": "workspaceFolderCount"
+                },
+                {
+                    "command": "local-history.copyRevisionPath",
+                    "when": "editorIsOpen && resourceScheme == file"
+                },
+                {
+                    "command": "local-history.copyRevisionPathWorkspace",
+                    "when": "workspaceFolderCount"
                 }
             ],
             "editor/title": [
@@ -118,18 +138,33 @@
                     "command": "local-history.clearHistory",
                     "when": "editorTextFocus",
                     "group": "LocalHistory@2"
+                },
+                {
+                    "command": "local-history.copyRevisionPath",
+                    "when": "editorTextFocus",
+                    "group": "LocalHistory@3"
                 }
             ],
             "explorer/context": [
                 {
                     "command": "local-history.viewHistory",
-                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
+                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot && !listMultiSelection",
                     "group": "LocalHistory@1"
                 },
                 {
                     "command": "local-history.clearHistory",
-                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot",
+                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot && !listMultiSelection",
                     "group": "LocalHistory@2"
+                },
+                {
+                    "command": "local-history.copyRevisionPath",
+                    "when": "!explorerResourceIsFolder && !explorerResourceIsRoot && !listMultiSelection",
+                    "group": "LocalHistory@3"
+                },
+                {
+                    "command": "local-history.copyRevisionPathWorkspace",
+                    "when": "explorerResourceIsFolder && explorerResourceIsRoot && !listMultiSelection",
+                    "group": "LocalHistory@4"
                 }
             ],
             "view/title": [

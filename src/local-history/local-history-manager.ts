@@ -91,7 +91,7 @@ export class LocalHistoryManager {
                 }));
 
                 if (items.length === 0) {
-                    vscode.window.showInformationMessage(`No local history file found for '${path.basename(uri.fsPath)}'`);
+                    vscode.window.showInformationMessage(`No local history found for '${path.basename(uri.fsPath)}'`);
                     return;
                 }
 
@@ -279,7 +279,7 @@ export class LocalHistoryManager {
 
             // Check if local history exists for the active file
             if (!fs.existsSync(revisionFolderPath)) {
-                vscode.window.showInformationMessage(`No local history file found for '${path.basename(uri.fsPath)}'`);
+                vscode.window.showInformationMessage(`No local history found for '${path.basename(uri.fsPath)}'`);
                 return;
             }
 
@@ -407,12 +407,12 @@ export class LocalHistoryManager {
                             fs.unlinkSync(file);
                         }
                         this.removeEmptyFolders();
-                        vscode.window.showInformationMessage(`Successfully deleted ${fileUris.length} local-history file(s)`);
+                        vscode.window.showInformationMessage(`Successfully deleted ${fileUris.length} local-history file(s).`);
                         vscode.commands.executeCommand(Commands.TREE_REFRESH);
                     }
                 });
             } else {
-                vscode.window.showInformationMessage(`No local-history found older than ${days} day(s)`);
+                vscode.window.showInformationMessage(`No local-history found older than ${days} day(s).`);
             }
         }
         catch (err) {
@@ -496,4 +496,35 @@ export class LocalHistoryManager {
             }
         }
     }
+
+    /**
+     * Writes the revision path of the active editor into the clipboard.
+     */
+    public async copyRevisionPath(uri: vscode.Uri): Promise<void> {
+        if (uri) {
+            const revisionFolderPath = this.getRevisionFolderPath(uri.fsPath);
+
+            if (!fs.existsSync(revisionFolderPath)) {
+                vscode.window.showInformationMessage(`No revision folder found for '${path.basename(uri.fsPath)}'`);
+                return;
+            }
+
+            await vscode.env.clipboard.writeText(revisionFolderPath);
+        }
+    }
+
+    /**
+     * Writes the revision path of the given workspace into the clipboard.
+     */
+    public async copyRevisionPathWorkspace(uri: vscode.Uri): Promise<void> {
+        const revisionFolderPath = this.getRevisionFolderPath(uri.fsPath);
+
+        if (!fs.existsSync(revisionFolderPath)) {
+            vscode.window.showInformationMessage('No revision folder found for the current workspace.');
+            return;
+        }
+
+        await vscode.env.clipboard.writeText(revisionFolderPath);
+    }
+
 }
