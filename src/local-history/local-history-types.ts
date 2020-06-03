@@ -1,3 +1,6 @@
+import * as os from 'os';
+import * as path from 'path';
+
 /**
  * The number of milliseconds in a day.
  */
@@ -68,6 +71,14 @@ export namespace Preferences {
     export const FILE_SIZE_LIMIT: LocalHistoryPreference = {
         id: 'local-history.fileSizeLimit',
         default: 25
+    };
+
+    /**
+     * Controls the path of .local-history folder in the OS.
+     */
+    export const HISTORY_PATH: LocalHistoryPreference = {
+        id: 'local-history.historyPath',
+        default: path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME))
     };
 
     /**

@@ -347,7 +347,7 @@ export class LocalHistoryManager {
      */
     public getRevisionFolderPath(activeEditorUri: string): string {
         const editorUri = activeEditorUri.replace(/[\:/]/g, path.sep);
-        const historyFolderPath = path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME));
+        const historyFolderPath = this.localHistoryPreferencesService.historyPath;
         const revisionFolderPath = path.normalize(path.join(historyFolderPath, editorUri));
 
         return revisionFolderPath;
@@ -369,7 +369,7 @@ export class LocalHistoryManager {
      * @param days The number of days.
      */
     public removeOldFiles(days: number): void {
-        const dirPath = path.join(os.homedir(), LOCAL_HISTORY_DIRNAME);
+        const dirPath = this.localHistoryPreferencesService.historyPath;
         if (!fs.existsSync(dirPath)) {
             return;
         }
@@ -378,7 +378,7 @@ export class LocalHistoryManager {
             const currentDate = Date.now();
             const fileUris: string[] = [];
             for (const folder of folders) {
-                const revisionFolderPath = path.join(os.homedir(), LOCAL_HISTORY_DIRNAME, folder);
+                const revisionFolderPath = path.join(this.localHistoryPreferencesService.historyPath, folder);
                 const files = fs.readdirSync(revisionFolderPath);
                 files.filter((file) => {
                     const filePath = path.join(revisionFolderPath, file);
@@ -475,7 +475,7 @@ export class LocalHistoryManager {
      * Removes empty folders.
      */
     private removeEmptyFolders() {
-        const localHistoryDir = path.normalize(path.join(os.homedir(), LOCAL_HISTORY_DIRNAME));
+        const localHistoryDir = this.localHistoryPreferencesService.historyPath;
         const folders = fs.readdirSync(localHistoryDir);
         for (const folder of folders) {
             const folderPath = path.normalize(path.join(localHistoryDir, folder));

@@ -6,6 +6,7 @@ export class LocalHistoryPreferencesService {
     private _excludedFiles: object = Preferences.EXCLUDE_FILES.default;
     private _fileLimit: number = Preferences.FILE_LIMIT.default;
     private _fileSizeLimit: number = Preferences.FILE_SIZE_LIMIT.default;
+    private _historyPath: string = Preferences.HISTORY_PATH.default;
     private _maxEntriesPerFile: number = Preferences.MAX_ENTRIES_PER_FILE.default;
     private _saveDelay: number = Preferences.SAVE_DELAY.default;
 
@@ -13,6 +14,7 @@ export class LocalHistoryPreferencesService {
         this.excludedFiles = this.getExcludedFiles();
         this.fileLimit = this.getFileLimit();
         this.fileSizeLimit = this.getFileSizeLimit();
+        this.historyPath = this.getHistoryPath();
         this.maxEntriesPerFile = this.getMaxEntriesPerFile();
         this.saveDelay = this.getSaveDelay();
 
@@ -26,6 +28,10 @@ export class LocalHistoryPreferencesService {
             }
             if (event.affectsConfiguration(Preferences.FILE_SIZE_LIMIT.id)) {
                 this.fileSizeLimit = this.getFileSizeLimit();
+            }
+            if (event.affectsConfiguration(Preferences.HISTORY_PATH.id)) {
+                this.historyPath = this.getHistoryPath();
+                vscode.window.showInformationMessage('Path for .local-history folder updated. Please move the content inside the old .local-history folder manually.');
             }
             if (event.affectsConfiguration(Preferences.MAX_ENTRIES_PER_FILE.id)) {
                 this.maxEntriesPerFile = this.getMaxEntriesPerFile();
@@ -85,6 +91,22 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
+     * Get the path of .local-history folder in the OS.
+     * @returns the path of .local-history folder in the OS.
+     */
+    get historyPath(): string {
+        return this._historyPath;
+    }
+
+    /**
+     * Set the path of .local-history folder in the OS.
+     * @param path the path of .local-history folder in the OS.
+     */
+    set historyPath(path: string) {
+        this._historyPath = path;
+    }
+
+    /**
      * Get the maximum allowed entries for a file.
      * @returns the maximum allowed entries for a file.
      */
@@ -126,7 +148,7 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
-     * Get the configuration value for 'EXCLUDE_FILES'
+     * Get the configuration value for 'EXCLUDE_FILES'.
      */
     private getExcludedFiles(): object {
         const value = this.getPreferenceValueById(Preferences.EXCLUDE_FILES.id);
@@ -135,8 +157,7 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
-     * Get the configuration value for 'FILE_LIMIT'
-     *
+     * Get the configuration value for 'FILE_LIMIT'.
      */
     private getFileLimit(): number {
         const value = this.getPreferenceValueById(Preferences.FILE_LIMIT.id);
@@ -144,11 +165,20 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
-     * Get the configuration value for 'FILE_SIZE_LIMIT'
+     * Get the configuration value for 'FILE_SIZE_LIMIT'.
      */
     private getFileSizeLimit(): number {
         const value = this.getPreferenceValueById(Preferences.FILE_SIZE_LIMIT.id);
         return typeof value === 'number' ? value : Preferences.FILE_SIZE_LIMIT.default as number;
+    }
+
+    /**
+     * Get the configuration value for 'HISTORY_PATH'.
+     */
+    private getHistoryPath(): string {
+        const value = this.getPreferenceValueById(Preferences.HISTORY_PATH.id);
+        const newValue = typeof value === 'string' && value.length ? value : Preferences.HISTORY_PATH.default as string;
+        return newValue;
     }
 
     /**

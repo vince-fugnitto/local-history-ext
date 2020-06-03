@@ -169,7 +169,7 @@
                     "type": "number",
                     "default": 30,
                     "minimum": 1,
-                    "description": "Controls the maximum number of saved revisions allowed for a given file"
+                    "description": "Controls the maximum number of saved revisions allowed for a given file."
                 },
                 "local-history.excludeFiles": {
                     "type": "object",
@@ -178,6 +178,10 @@
                         "**/.local-history/**": true
                     },
                     "scope": "resource"
+                },
+                "local-history.historyPath": {
+                    "type": "string",
+                    "description": "Controls the path of .local-history folder in the OS."
                 }
             }
         }
