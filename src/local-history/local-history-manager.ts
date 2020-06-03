@@ -158,6 +158,7 @@ export class LocalHistoryManager {
                 if (this.historyFileTimeDifference(document) && mostRecentRevisionContent && !(activeDocumentContent === mostRecentRevisionContent)) {
                     if (!this.checkRevisionLimit(document)) {
                         await this.writeFile(historyFilePath, activeDocumentContent, true);
+                        OutputManager.appendInfoMessage(`A new revision ${historyFileName} for ${fileFullPath.base} has been created at ${timestamp}.`);
                         return;
                     }
                 }
@@ -171,6 +172,7 @@ export class LocalHistoryManager {
                 }
             }
             await this.writeFile(historyFilePath, activeDocumentContent, true);
+            OutputManager.appendInfoMessage(`A new revision ${historyFileName} for ${fileFullPath.base} has been created at ${timestamp}.`);
         }
         catch (err) {
             OutputManager.appendWarningMessage(['An error has occurred when saving the active editor content', err]);
@@ -204,6 +206,7 @@ export class LocalHistoryManager {
                 await this.saveEditorContext(current.document, true);
                 const fileContent = await this.readFile(previous.document.fileName);
                 await this.writeFile(current.document.fileName, fileContent, false);
+                OutputManager.appendInfoMessage(`The current active editor has been reverted to one of its previous revisions (${path.basename(previous.document.fileName)})`);
             } catch (err) {
                 OutputManager.appendWarningMessage(['An error has occurred when reverting to previous revision', err]);
             }
@@ -264,6 +267,7 @@ export class LocalHistoryManager {
                 }
 
                 vscode.window.showInformationMessage(`'${path.basename(revision.fsPath)}' was deleted.`);
+                OutputManager.appendInfoMessage(`'${path.basename(revision.fsPath)}' has been deleted.`);
                 vscode.commands.executeCommand(Commands.TREE_REFRESH);
             });
         }
@@ -293,6 +297,7 @@ export class LocalHistoryManager {
                         fs.rmdirSync(revisionFolderPath);
                         vscode.window.showInformationMessage(`All revisions for '${path.basename(uri.fsPath)}' were deleted.`);
                         vscode.commands.executeCommand(Commands.TREE_REFRESH);
+                        OutputManager.appendInfoMessage(`All revisions for ${path.basename(uri.fsPath)} has been deleted.`);
                     }
                 });
             } catch (err) {
@@ -406,6 +411,7 @@ export class LocalHistoryManager {
                         for (const file of fileUris) {
                             fs.unlinkSync(file);
                         }
+                        OutputManager.appendInfoMessage(`All revision files older than ${days} has been deleted.`);
                         this.removeEmptyFolders();
                         vscode.window.showInformationMessage(`Successfully deleted ${fileUris.length} local-history file(s).`);
                         vscode.commands.executeCommand(Commands.TREE_REFRESH);

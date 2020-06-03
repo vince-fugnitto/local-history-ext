@@ -12,6 +12,7 @@ enum Severity {
 
 export class OutputManager {
 
+    private static outputChannel: vscode.OutputChannel;
     /**
      * Logs the message in the output channel, with 'INFO' severity.
      * @param messages The logged messages.
@@ -67,6 +68,9 @@ export class OutputManager {
      * Creates an output channel.
      */
     private static setupChannel(): vscode.OutputChannel {
-        return vscode.window.createOutputChannel('Local History');
+        if (!OutputManager.outputChannel) {
+            OutputManager.outputChannel = vscode.window.createOutputChannel('Local History');
+        }
+        return OutputManager.outputChannel;
     }
 }
