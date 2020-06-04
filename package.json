@@ -182,9 +182,9 @@
             "properties": {
                 "local-history.maxEntriesPerFile": {
                     "type": "number",
-                    "default": 10,
-                    "minimum": 3,
-                    "description": "Controls the number of entries to keep for a given file."
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Controls the number of entries to display for a given file."
                 },
                 "local-history.saveDelay": {
                     "type": "number",
@@ -206,7 +206,7 @@
                 },
                 "local-history.excludeFiles": {
                     "type": "object",
-                    "markdownDescription": "Configure glob patterns for excluding files and folders in fulltext searches and quick open. Inherits all glob patterns from the `Files: Exclude setting`. The glob includes `**./local-history/**` as default. Read more about glob patterns [here](https://code.visualstudio.com/docs/editor/codebasics#_advanced-search-options).",
+                    "markdownDescription": "Configure glob patterns of file paths to exclude from automatic revisions. Inherits all glob patterns from the `files.exclude` setting. The glob includes `**./local-history/**` as default. Read more about glob patterns [here](https://code.visualstudio.com/docs/editor/codebasics#_advanced-search-options).",
                     "default": {
                         "**/.local-history/**": true
                     },

@@ -102,8 +102,10 @@ export class LocalHistoryManager {
                     return;
                 }
 
-                // Limits the number of entries based on the preference 'local-history.maxEntriesPerFile`.
-                items = items.slice(0, this.localHistoryPreferencesService.maxEntriesPerFile);
+                // Limits the number of entries to display based on the `maxEntriesPerFile` preference.
+                items = this.localHistoryPreferencesService.maxEntriesPerFile > 0
+                    ? items.slice(0, this.localHistoryPreferencesService.maxEntriesPerFile)
+                    : items;
                 vscode.window.showQuickPick(items,
                     {
                         placeHolder: `Please select a local history revision for '${path.basename(uri.fsPath)}'`,

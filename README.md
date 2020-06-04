@@ -21,11 +21,21 @@ The following are some high-level features the extension provides:
 
 - ### Automatic Revisions
 
-  The extension creates automatic revisions for the user based on when files are saved in their workspace. These automatic revisions are tracked by the extension and users are capable or reviewing them directly in the application. 
+  The extension creates automatic read-only revisions for the user based on when files are saved in their workspace. These automatic revisions are tracked by the extension and users are capable or reviewing them directly in the application. 
 
 - ### View Revisions as a `Diff`
 
   When reviewing a revision for an active editor, the revision will be displayed as a `diff` (lines added versus deleted) so that users are able to easily view the differences between the revision and the content of the current editor.
+
+- ### Local History View
+
+  The extension contributes a new view to the application which is used to easily view, and manage revisions for the active file. From this view users are able to view available revisions, open them in a diff editor, and remove the revision.
+
+  <div align='center'>
+
+    <img src='./assets/images/view-widget.png' />
+
+  </div>
 
 - ### Revision Management
 
@@ -40,6 +50,8 @@ The following are some high-level features the extension provides:
   The extension utilizes a simple storage structure (under the user's home `.local-history`) which mimics the folder structure of the workspace project. This allows users to easily navigate the `.local-history` folder outside of the application if they wish to view previous revisions quickly.
 
 ## Documentation
+
+---
 
 ### Commands
 
@@ -121,7 +133,32 @@ Ex:
 /home/foobar/.local-history/home/foobar/workspaces/theia
 ```
 
+---
+
 ### Preferences
+
+#### `Local-history: Exclude Files`:
+
+The preference configures the `glob patterns` of file paths to exclude from automatic revisions. The preference inherits all the glob patterns from the `files.exclude` setting, and defaults to `**/.local-history/**`.
+
+#### `Local-history: File Limit`:
+
+The preference controls the maximum number of saved revisions allowed for a given file. The default value is **30** revisions, and can have a minimum value of **5** revisions. If the threshold limit is reached, the oldest revision is deleted in order to save the new backup.
+
+#### `Local-history: File Size Limit`:
+
+
+The preference controls the maximum acceptable file size for storing revisions in megabytes. This preference defaults to **5Mb** and can have a minimum value of **0.5Mb**. For file sizes greater than the limit, revisions will **not** be created.
+
+#### `Local-history: Max Entries Per File`:
+
+The preference controls the number of revisions to display for a given file when executing the command `View History`. The default value is **0** (display all revisions).
+
+#### `Local-history: Save Delay`:
+
+The preference controls the save delay in milliseconds. The default value is **300000** milliseconds and can have minimum value of **0** milliseconds. If additional saves of a resource are made, creating revisions will be based on if the delay is reset (new save is older than the delay).
+
+---
 
 ## Development
 

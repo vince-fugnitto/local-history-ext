@@ -126,7 +126,7 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
-     * Get the configuration value for 'EXCLUDE_FILES'
+     * Get the configuration value for 'EXCLUDE_FILES'.
      */
     private getExcludedFiles(): object {
         const value = this.getPreferenceValueById(Preferences.EXCLUDE_FILES.id);
@@ -135,7 +135,7 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
-     * Get the configuration value for 'FILE_LIMIT'
+     * Get the configuration value for 'FILE_LIMIT'.
      *
      */
     private getFileLimit(): number {
@@ -144,7 +144,7 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
-     * Get the configuration value for 'FILE_SIZE_LIMIT'
+     * Get the configuration value for 'FILE_SIZE_LIMIT'.
      */
     private getFileSizeLimit(): number {
         const value = this.getPreferenceValueById(Preferences.FILE_SIZE_LIMIT.id);

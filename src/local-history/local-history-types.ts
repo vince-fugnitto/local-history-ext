@@ -75,7 +75,7 @@ export namespace Preferences {
      */
     export const MAX_ENTRIES_PER_FILE: LocalHistoryPreference = {
         id: 'local-history.maxEntriesPerFile',
-        default: 10
+        default: 0
     };
 
     /**
