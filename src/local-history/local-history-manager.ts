@@ -421,16 +421,19 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Checks the size of file in active editor against the preference value 'fileSizeLimit'
+     * Checks to see if the file size of the active editor is within the preference value 'fileSizeLimit'
      * @param document Represent the active text document.
      */
     private fileSizeLimit(document: vscode.TextDocument): boolean {
-        const sizeInBytes = fs.statSync(document.uri.fsPath).size;
-        const sizeInMegaBytes = sizeInBytes / 1000000;
-        if (sizeInMegaBytes > this.localHistoryPreferencesService.fileSizeLimit) {
-            return false;
+        if (fs.existsSync(document.fileName)) {
+            const sizeInBytes = fs.statSync(document.uri.fsPath).size;
+            const sizeInMegaBytes = sizeInBytes / 1000000;
+            if (sizeInMegaBytes > this.localHistoryPreferencesService.fileSizeLimit) {
+                return false;
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
