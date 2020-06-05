@@ -20,12 +20,6 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "viewsWelcome": [
-            {
-                "view": "localHistoryTree",
-                "contents": "No local history found."
-            }
-        ],
         "viewsContainers": {
             "activitybar": [
                 {

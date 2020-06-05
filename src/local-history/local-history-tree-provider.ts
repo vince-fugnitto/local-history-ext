@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as moment from 'moment';
 // eslint-disable-next-line no-unused-vars
@@ -12,6 +13,7 @@ export class Revision extends vscode.TreeItem {
         this.label = label;
         this.uri = uri;
         this.command = command;
+        this.iconPath = vscode.ThemeIcon.File;
     }
 
     get tooltip(): string {
@@ -64,9 +66,29 @@ export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revisio
             revisions.push(new Revision(item.timestamp, item.uri, {
                 command: 'extension.openRevisionInDiff',
                 title: '',
-                arguments: [item.uri]
+                arguments: [item.uri],
+                tooltip: item.uri
             }));
         });
         return revisions;
+    }
+
+    /**
+     * Get the human-readable message of the filename.
+     * @returns the human-readable message of the filename.
+     */
+    getTreeViewMessage(): string {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return 'No active editor opened.';
+        }
+        let revisionsExist: boolean = false;
+        try {
+            revisionsExist = fs.readdirSync(this.manager.getRevisionFolderPath(editor.document.fileName)).length !== 0;
+        } catch (e) {
+            console.error(`message: ${e}`);
+        }
+        const basename = path.basename(editor.document.fileName);
+        return revisionsExist ? basename : `No history found for '${basename}'.`;
     }
 }

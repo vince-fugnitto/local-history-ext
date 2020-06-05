@@ -132,10 +132,24 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(...disposable);
 
-    // Tree View
-    const treeProvider = new LocalHistoryTreeProvider(manager);
-    vscode.window.registerTreeDataProvider('localHistoryTree', treeProvider);
-    vscode.commands.registerCommand(Commands.TREE_REFRESH, () => treeProvider.refresh());
+    // Local History Tree View.
+    const treeDataProvider = new LocalHistoryTreeProvider(manager);
+    const treeView = vscode.window.createTreeView('localHistoryTree', {
+        treeDataProvider,
+        canSelectMany: false,
+        showCollapseAll: false
+    });
+
+    // Update the message.
+    treeView.message = treeDataProvider.getTreeViewMessage();
+    treeDataProvider.onDidChangeTreeData(() => {
+        treeView.message = treeDataProvider.getTreeViewMessage();
+    });
+    vscode.window.onDidChangeActiveTextEditor(() => {
+        treeView.message = treeDataProvider.getTreeViewMessage();
+    });
+
+    vscode.commands.registerCommand(Commands.TREE_REFRESH, () => treeDataProvider.refresh());
     vscode.commands.registerCommand(Commands.TREE_DIFF, uri =>
         manager.displayDiff(vscode.Uri.file(uri), vscode.window.activeTextEditor!.document.uri));
 }
