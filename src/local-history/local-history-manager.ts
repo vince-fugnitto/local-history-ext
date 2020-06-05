@@ -162,6 +162,10 @@ export class LocalHistoryManager {
                         return;
                     }
                 }
+                else if (activeDocumentContent === mostRecentRevisionContent) {
+                    fs.renameSync(mostRecentRevision, historyFilePath);
+                    return;
+                }
                 else {
                     fs.renameSync(mostRecentRevision, historyFilePath);
                     await this.writeFile(historyFilePath, activeDocumentContent, true);
@@ -230,17 +234,17 @@ export class LocalHistoryManager {
      * @param isReadonly: controls whether to modify the file as 'readonly'.
      */
     private async writeFile(uri: string | vscode.Uri, content: string, isReadonly: boolean): Promise<void> {
+        if (fs.existsSync(typeof uri === 'string' ? uri : uri.fsPath)) {
+            // Changes the file permission to 'WRITE'. 
+            this.modifyFilePermissions(uri, '200');
+        }
         const fileUri: vscode.Uri = typeof uri === 'string' ? vscode.Uri.file(uri) : uri;
         const encodedContent = new TextEncoder().encode(content);
         await vscode.workspace.fs.writeFile(fileUri, encodedContent);
 
         if (isReadonly) {
             // Change file permission to read-only.
-            fs.chmod(typeof uri === 'string' ? uri : uri.fsPath, 0o400, (err) => {
-                if (err) {
-                    OutputManager.appendWarningMessage(err.message);
-                }
-            });
+            this.modifyFilePermissions(uri, '400');
         }
     }
 
@@ -534,6 +538,19 @@ export class LocalHistoryManager {
         }
 
         await vscode.env.clipboard.writeText(revisionFolderPath);
+    }
+
+    /**
+     * Modifies the permission of a file. 
+     * @param uri the path of source file. 
+     * @param filePermissions File mode for modifying permissions. 
+     */
+    private modifyFilePermissions(uri: string | vscode.Uri, filePermissions: string) {
+        fs.chmod(typeof uri === 'string' ? uri : uri.fsPath, filePermissions, (err) => {
+            if (err) {
+                OutputManager.appendWarningMessage(err.message);
+            }
+        });
     }
 
 }
