@@ -16,8 +16,8 @@ export class LocalHistoryManager {
     private localHistoryPreferencesService: LocalHistoryPreferencesService = new LocalHistoryPreferencesService();
 
     constructor() {
-        vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
-            this.saveEditorContext(document);
+        vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+            await this.saveEditorContext(document);
             vscode.commands.executeCommand(Commands.TREE_REFRESH);
         });
 
