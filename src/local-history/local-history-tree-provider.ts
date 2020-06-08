@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 // eslint-disable-next-line no-unused-vars
 import { LocalHistoryManager } from './local-history-manager';
+import { OutputManager } from './local-history-output-manager';
 
 export class Revision extends vscode.TreeItem {
     uri: string;
@@ -86,7 +87,7 @@ export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revisio
         try {
             revisionsExist = fs.readdirSync(this.manager.getRevisionFolderPath(editor.document.fileName)).length !== 0;
         } catch (e) {
-            console.error(`message: ${e}`);
+            OutputManager.appendWarningMessage(['An error has occurred when updating the tree view message', e]);
         }
         const basename = path.basename(editor.document.fileName);
         return revisionsExist ? basename : `No history found for '${basename}'.`;

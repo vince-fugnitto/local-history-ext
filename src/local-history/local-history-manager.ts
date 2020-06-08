@@ -44,6 +44,10 @@ export class LocalHistoryManager {
 
         this._historyFilesForActiveEditor = [];
 
+        if (!fs.existsSync(revisionFolderPath)) {
+            return;
+        }
+
         try {
             for (const [fileName, type] of await vscode.workspace.fs.readDirectory(vscode.Uri.file(revisionFolderPath))) {
                 if (type === vscode.FileType.File) {
@@ -134,6 +138,12 @@ export class LocalHistoryManager {
             return;
         }
 
+        const activeDocumentContent: string = await this.readFile(document.fileName);
+        
+        if (activeDocumentContent.length === 0) {
+            return;
+        }
+
         const timestamp = this.getCurrentTime();
         const timestampForFileName = timestamp.replace(/[-:. ]/g, '');
         const fileFullPath = path.parse(document.fileName);
@@ -151,7 +161,6 @@ export class LocalHistoryManager {
         try {
             const historyFilePath = path.join(revisionFolderPath, historyFileName);
             // Copy the content of the current active editor.
-            const activeDocumentContent: string = await this.readFile(document.fileName);
             const mostRecentRevision = this.getMostRecentRevision(revisionFolderPath);
             if (!isRevertChange && mostRecentRevision) {
                 const mostRecentRevisionContent: string | undefined = mostRecentRevision && await this.readFile(mostRecentRevision);
@@ -378,7 +387,7 @@ export class LocalHistoryManager {
      * Check if the active text document is read-only.
      */
     private checkPermission(document: vscode.TextDocument): void {
-        if ((fs.statSync(document.uri.fsPath).mode & 146) === 0) {
+        if (fs.existsSync(document.fileName) && (fs.statSync(document.uri.fsPath).mode & 146) === 0) {
             // Document is in read-only mode.
             vscode.window.showErrorMessage('Revision is read-only.');
             vscode.commands.executeCommand('undo');
