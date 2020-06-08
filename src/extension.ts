@@ -45,14 +45,14 @@ export function activate(context: vscode.ExtensionContext) {
                 // Diff is opened, click 'Remove revision' either from diff toolbar or tree-view
                 vscode.window.showWarningMessage(`Are you sure you want to permanently delete '${path.basename(editors[0].document.fileName)}'?`, { modal: true }, 'Delete').then((selection) => {
                     if (selection === 'Delete') {
-                        manager.removeRevision(editors[0].document.uri, true);
+                        manager.removeRevision(editors[0].document.uri, editors[1].document.uri, true);
                     }
                 });
             } else if (revision) {
                 // No diff opened, click 'Remove revision' from tree-view
                 vscode.window.showWarningMessage(`Are you sure you want to permanently delete '${path.basename(revision.uri)}'?`, { modal: true }, 'Delete').then((selection) => {
                     if (selection === 'Delete') {
-                        manager.removeRevision(vscode.Uri.file(revision.uri));
+                        manager.removeRevision(vscode.Uri.file(revision.uri), vscode.window.activeTextEditor!.document.uri);
                     }
                 });
             }
@@ -73,7 +73,6 @@ export function activate(context: vscode.ExtensionContext) {
     disposable.push(
         vscode.commands.registerCommand(Commands.CLEAR_OLD_HISTORY, async () => {
             const days = await vscode.window.showInputBox({
-                value: '30',
                 placeHolder: 'Please enter the amount of days',
                 validateInput: input => {
                     const day = parseInt(input);

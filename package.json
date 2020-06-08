@@ -239,6 +239,7 @@
         "vscode-test": "^1.2.2"
     },
     "dependencies": {
+        "delete-empty": "^3.0.0",
         "minimatch": "^3.0.4",
         "moment": "2.24.0"
     }

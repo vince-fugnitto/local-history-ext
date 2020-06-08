@@ -6,6 +6,7 @@ import * as os from 'os';
 import * as moment from 'moment';
 import * as minimatch from 'minimatch';
 import { TextDecoder, TextEncoder } from 'util';
+import * as deleteEmpty from 'delete-empty';
 
 import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
 import { OutputManager } from './local-history-output-manager';
@@ -249,12 +250,25 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Remove the active revision of a file.
+     * Recursively deletes all empty folders in the workspace revision directory.
      */
-    public removeRevision(revision: vscode.Uri, diffActive?: boolean): void {
-        if (revision) {
+    private removeEmptyFoldersRec(activeEditorUri: vscode.Uri): void {
+        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length <= 0) {
+            return;
+        }
+
+        const currentWorkspace = vscode.workspace.getWorkspaceFolder(activeEditorUri)!.uri;
+        const workspaceRevisionPath = this.getRevisionFolderPath(currentWorkspace.fsPath);
+        deleteEmpty.sync(workspaceRevisionPath);
+    }
+
+    /**
+     * Removes a revision of the active editor.
+     */
+    public removeRevision(revisionUri: vscode.Uri, activeEditorUri: vscode.Uri, diffActive?: boolean): void {
+        if (revisionUri) {
             // Remove the revision.
-            fs.unlink(revision.fsPath, (err) => {
+            fs.unlink(revisionUri.fsPath, (err) => {
                 if (err) {
                     OutputManager.appendWarningMessage('An error has occurred when removing the revision');
                     return;
@@ -264,14 +278,15 @@ export class LocalHistoryManager {
                     vscode.commands.executeCommand('workbench.action.closeActiveEditor');
                 } else {
                     // If diff is opened (but not active), close the diff window after the revision is removed
-                    vscode.workspace.openTextDocument(revision).then(async doc => {
+                    vscode.workspace.openTextDocument(revisionUri).then(async doc => {
                         await vscode.window.showTextDocument(doc);
                         vscode.commands.executeCommand('workbench.action.closeActiveEditor');
                     });
                 }
 
-                vscode.window.showInformationMessage(`'${path.basename(revision.fsPath)}' was deleted.`);
-                OutputManager.appendInfoMessage(`'${path.basename(revision.fsPath)}' has been deleted.`);
+                this.removeEmptyFoldersRec(activeEditorUri);
+                vscode.window.showInformationMessage(`'${path.basename(revisionUri.fsPath)}' was deleted.`);
+                OutputManager.appendInfoMessage(`'${path.basename(revisionUri.fsPath)}' has been deleted.`);
                 vscode.commands.executeCommand(Commands.TREE_REFRESH);
             });
         }
@@ -299,6 +314,7 @@ export class LocalHistoryManager {
                             fs.unlinkSync(path.join(revisionFolderPath, file));
                         }
                         fs.rmdirSync(revisionFolderPath);
+                        this.removeEmptyFoldersRec(uri);
                         vscode.window.showInformationMessage(`All revisions for '${path.basename(uri.fsPath)}' were deleted.`);
                         vscode.commands.executeCommand(Commands.TREE_REFRESH);
                         OutputManager.appendInfoMessage(`All revisions for ${path.basename(uri.fsPath)} has been deleted.`);
@@ -386,7 +402,7 @@ export class LocalHistoryManager {
     }
 
     /**
-     * Clears all history files which are last modified @param days ago.
+     * Removes all history files which are last modified @param days ago.
      * @param days The number of days.
      */
     public removeOldFiles(days: number): void {
