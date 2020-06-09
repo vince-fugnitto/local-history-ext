@@ -80,7 +80,7 @@ export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revisio
      */
     getTreeViewMessage(): string {
         const editor = vscode.window.activeTextEditor;
-        if (!editor) {
+        if (!editor || editor?.document.uri.scheme !== 'file') {
             return 'No active editor opened.';
         }
         let revisionsExist: boolean = false;
