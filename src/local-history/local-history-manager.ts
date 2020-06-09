@@ -175,7 +175,6 @@ export class LocalHistoryManager {
                     }
                 }
                 else if (activeDocumentContent === mostRecentRevisionContent) {
-                    fs.renameSync(mostRecentRevision, historyFilePath);
                     return;
                 }
                 else {
