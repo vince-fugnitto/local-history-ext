@@ -7,9 +7,9 @@ import * as moment from 'moment';
 import * as minimatch from 'minimatch';
 import { TextDecoder, TextEncoder } from 'util';
 import * as deleteEmpty from 'delete-empty';
-
 import { HistoryFileProperties, LOCAL_HISTORY_DIRNAME, DAY_TO_MILLISECONDS, Commands } from './local-history-types';
 import { OutputManager } from './local-history-output-manager';
+import * as shelljs from 'shelljs';
 
 export class LocalHistoryManager {
 
@@ -142,7 +142,7 @@ export class LocalHistoryManager {
         }
 
         const activeDocumentContent: string = await this.readFile(document.fileName);
-        
+
         if (activeDocumentContent.length === 0) {
             return;
         }
@@ -158,7 +158,7 @@ export class LocalHistoryManager {
 
         // Create a folder (and all the parent folders) for storing all the local history file for the active editor.
         if (!fs.existsSync(revisionFolderPath)) {
-            fs.mkdirSync(revisionFolderPath, { recursive: true });
+            shelljs.mkdir('-p', revisionFolderPath);
         }
 
         try {
