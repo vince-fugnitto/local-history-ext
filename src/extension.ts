@@ -22,17 +22,11 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Command which reverts the active editor to its previous revision.
+    // Command which reverts the active editor to one of its previous revisions.
     disposable.push(
-        vscode.commands.registerTextEditorCommand(Commands.REVERT_TO_PREVIOUS_REVISION, () => {
-            const editors = vscode.window.visibleTextEditors;
-            if (editors && editors.length === 2) {
-                vscode.window.showWarningMessage(`Are you sure you want to revert '${path.basename(editors[1].document.fileName)}' to its previous state?`, { modal: true }, 'Revert').then((selection) => {
-                    if (selection === 'Revert') {
-                        manager.revertToPrevRevision(editors[0], editors[1]);
-                        vscode.commands.executeCommand(Commands.TREE_REFRESH);
-                    }
-                });
+        vscode.commands.registerCommand(Commands.REVERT_TO_PREVIOUS_REVISION, (revision) => {
+            if (revision) {
+                manager.revertToPrevRevision(vscode.Uri.file(revision.uri));
             }
         })
     );

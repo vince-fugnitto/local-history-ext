@@ -48,8 +48,7 @@
                 "icon": {
                     "dark": "resources/dark/history.svg",
                     "light": "resources/light/history.svg"
-                },
-                "when": "textCompareEditorVisible && isInDiffEditor"
+                }
             },
             {
                 "command": "local-history.removeRevision",
@@ -119,18 +118,6 @@
                     "when": "workspaceFolderCount"
                 }
             ],
-            "editor/title": [
-                {
-                    "command": "local-history.revertToPrevRevision",
-                    "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
-                    "group": "navigation@1"
-                },
-                {
-                    "command": "local-history.removeRevision",
-                    "when": "textCompareEditorVisible && isInDiffEditor && !multipleEditorGroups",
-                    "group": "navigation@2"
-                }
-            ],
             "editor/context": [
                 {
                     "command": "local-history.viewHistory",
@@ -179,9 +166,14 @@
             ],
             "view/item/context": [
                 {
+                    "command": "local-history.revertToPrevRevision",
+                    "when": "view == localHistoryTree && viewItem == local-history",
+                    "group": "inline@1"
+                },
+                {
                     "command": "local-history.removeRevision",
-                    "when": "view == localHistoryTree",
-                    "group": "inline"
+                    "when": "view == localHistoryTree && viewItem == local-history",
+                    "group": "inline@2"
                 }
             ]
         },

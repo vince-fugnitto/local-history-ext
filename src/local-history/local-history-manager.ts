@@ -208,25 +208,39 @@ export class LocalHistoryManager {
     /**
      * Revert the current active editor to one of its previous revision.
      */
-    public async revertToPrevRevision(previous: vscode.TextEditor, current: vscode.TextEditor): Promise<void> {
-        if (current && previous) {
-            const revisionContent: string | undefined = await this.readFile(previous.document.fileName);
-            const activeDocumentContent: string = await this.readFile(current.document.fileName);
-            if (revisionContent && (activeDocumentContent === revisionContent)) {
-                // Prevent user from reverting to the same revision more than once.
-                // Prevent duplicate 'revert change' revision.
-                return;
-            }
+    public async revertToPrevRevision(previous: vscode.Uri): Promise<void> {
+        let current = path.dirname(previous.fsPath.split(`${path.sep}.local-history${path.sep}`)[1]);
 
-            try {
-                await this.saveEditorContext(current.document, true);
-                const fileContent = await this.readFile(previous.document.fileName);
-                await this.writeFile(current.document.fileName, fileContent, false);
-                OutputManager.appendInfoMessage(`The current active editor has been reverted to one of its previous revisions (${path.basename(previous.document.fileName)})`);
-            } catch (err) {
-                OutputManager.appendWarningMessage(['An error has occurred when reverting to previous revision', err]);
-            }
+        // Add : for Windows drive
+        if (os.platform() === 'win32') {
+            current = `${current.slice(0, 1)}:${current.slice(1)}`;
         }
+
+        vscode.window.showWarningMessage(`Are you sure you want to revert '${path.basename(current)}' to its previous state?`,
+            { modal: true }, 'Revert').then(async (selection) => {
+                if (selection === 'Revert') {
+                    const revisionContent: string | undefined = await this.readFile(previous);
+                    const activeDocumentContent: string = await this.readFile(current);
+                    if (revisionContent && (activeDocumentContent === revisionContent)) {
+                        // Prevent user from reverting to the same revision more than once.
+                        // Prevent duplicate 'revert change' revision.
+                        return;
+                    }
+
+                    try {
+                        vscode.workspace.openTextDocument(current).then(async doc => {
+                            await this.saveEditorContext(doc, true);
+                        });
+
+                        const previousContent: string | undefined = await this.readFile(previous);
+                        await this.writeFile(current, previousContent, false);
+                        vscode.commands.executeCommand(Commands.TREE_REFRESH);
+                        OutputManager.appendInfoMessage(`The editor has been reverted to its previous revision (${path.basename(previous.fsPath)}).`);
+                    } catch (err) {
+                        OutputManager.appendWarningMessage([`An error has occurred when reverting the editor to its previous revision (${path.basename(previous.fsPath)}).`, err]);
+                    }
+                }
+            });
     }
 
     /**

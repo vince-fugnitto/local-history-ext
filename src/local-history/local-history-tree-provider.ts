@@ -15,6 +15,7 @@ export class Revision extends vscode.TreeItem {
         this.uri = uri;
         this.command = command;
         this.iconPath = vscode.ThemeIcon.File;
+        this.contextValue = 'local-history';
     }
 
     get tooltip(): string {
