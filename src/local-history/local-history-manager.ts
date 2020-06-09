@@ -46,12 +46,14 @@ export class LocalHistoryManager {
         this._historyFilesForActiveEditor = [];
 
         try {
-            for (const [fileName, type] of await vscode.workspace.fs.readDirectory(vscode.Uri.file(revisionFolderPath))) {
-                if (type === vscode.FileType.File) {
+            const files = fs.readdirSync(revisionFolderPath);
+            for (const file of files) {
+                const filePath = path.join(revisionFolderPath, file);
+                if (fs.statSync(filePath).isFile()) {
                     const data: HistoryFileProperties = {
-                        fileName: fileName,
-                        timestamp: this.parseTimestamp(fileName),
-                        uri: path.join(revisionFolderPath, fileName),
+                        fileName: file,
+                        timestamp: this.parseTimestamp(file),
+                        uri: path.join(revisionFolderPath, file),
                     };
                     this._historyFilesForActiveEditor.unshift(data);
                 }
