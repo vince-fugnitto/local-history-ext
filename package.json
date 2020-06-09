@@ -45,13 +45,19 @@
             {
                 "command": "local-history.revertToPrevRevision",
                 "title": "Local History: Revert to Previous Revision",
-                "icon": "$(history)",
+                "icon": {
+                    "dark": "resources/dark/history.svg",
+                    "light": "resources/light/history.svg"
+                },
                 "when": "textCompareEditorVisible && isInDiffEditor"
             },
             {
                 "command": "local-history.removeRevision",
                 "title": "Local History: Remove Revision",
-                "icon": "$(trash)"
+                "icon": {
+                    "dark": "resources/dark/trash.svg",
+                    "light": "resources/light/trash.svg"
+                }
             },
             {
                 "command": "local-history.clearHistory",
@@ -64,7 +70,10 @@
             {
                 "command": "local-history.refreshEntry",
                 "title": "Local History: Refresh",
-                "icon": "$(refresh)"
+                "icon": {
+                    "dark": "resources/dark/refresh.svg",
+                    "light": "resources/light/refresh.svg"
+                }
             },
             {
                 "command": "local-history:viewDocumentation",
