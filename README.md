@@ -200,4 +200,4 @@ The following are some notable features the extension provides:
 
 ## License
 
-- [MIT](./LICENSE)
+- [EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0](./LICENSE)
