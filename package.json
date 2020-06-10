@@ -206,7 +206,7 @@
                 },
                 "local-history.excludeFiles": {
                     "type": "object",
-                    "markdownDescription": "Configure glob patterns for excluding files and folders in fulltext searches and quick open. Inherits all glob patterns from the `Files: Exclude setting`. The glob includes `**./local-history/**` as default. Read more about glob patterns [here](https://code.visualstudio.com/docs/editor/codebasics#_advanced-search-options).",
+                    "description": "Configure glob patterns of file paths to exclude from automatic revisions. Inherits all glob patterns from the `files.exclude` setting. The glob includes `**./local-history/**` by default.",
                     "default": {
                         "**/.local-history/**": true
                     },
