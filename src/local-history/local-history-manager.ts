@@ -91,7 +91,7 @@ export class LocalHistoryManager {
             const revisionFolderPath = this.getRevisionFolderPath(uri.fsPath);
 
             this.loadHistory(revisionFolderPath).then(() => {
-                let items: vscode.QuickPickItem[] = this._historyFilesForActiveEditor.map(item => ({
+                const items: vscode.QuickPickItem[] = this._historyFilesForActiveEditor.map(item => ({
                     label: `$(calendar) ${item.timestamp}`,
                     description: path.basename(item.uri),
                     detail: `Last modified ${moment(item.timestamp.replace(/[-: ]/g, ''), 'YYYYMMDDhhmmss').fromNow()}`
@@ -102,8 +102,6 @@ export class LocalHistoryManager {
                     return;
                 }
 
-                // Limits the number of entries based on the preference 'local-history.maxEntriesPerFile`.
-                items = items.slice(0, this.localHistoryPreferencesService.maxEntriesPerFile);
                 vscode.window.showQuickPick(items,
                     {
                         placeHolder: `Please select a local history revision for '${path.basename(uri.fsPath)}'`,

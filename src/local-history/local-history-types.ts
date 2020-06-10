@@ -71,14 +71,6 @@ export namespace Preferences {
     };
 
     /**
-     * Controls the number of entries allowed for a given resource for display purposes.
-     */
-    export const MAX_ENTRIES_PER_FILE: LocalHistoryPreference = {
-        id: 'local-history.maxEntriesPerFile',
-        default: 10
-    };
-
-    /**
      * Controls the saving behavior when creating local-history revisions.
      */
     export const SAVE_DELAY: LocalHistoryPreference = {

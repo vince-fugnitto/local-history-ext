@@ -180,12 +180,6 @@
         "configuration": {
             "title": "Local History",
             "properties": {
-                "local-history.maxEntriesPerFile": {
-                    "type": "number",
-                    "default": 10,
-                    "minimum": 3,
-                    "description": "Controls the number of entries to keep for a given file."
-                },
                 "local-history.saveDelay": {
                     "type": "number",
                     "default": 300000,

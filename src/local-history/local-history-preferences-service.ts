@@ -6,14 +6,12 @@ export class LocalHistoryPreferencesService {
     private _excludedFiles: object = Preferences.EXCLUDE_FILES.default;
     private _fileLimit: number = Preferences.FILE_LIMIT.default;
     private _fileSizeLimit: number = Preferences.FILE_SIZE_LIMIT.default;
-    private _maxEntriesPerFile: number = Preferences.MAX_ENTRIES_PER_FILE.default;
     private _saveDelay: number = Preferences.SAVE_DELAY.default;
 
     constructor() {
         this.excludedFiles = this.getExcludedFiles();
         this.fileLimit = this.getFileLimit();
         this.fileSizeLimit = this.getFileSizeLimit();
-        this.maxEntriesPerFile = this.getMaxEntriesPerFile();
         this.saveDelay = this.getSaveDelay();
 
         // Listen to changes to the preferences configuration and update accordingly.
@@ -26,9 +24,6 @@ export class LocalHistoryPreferencesService {
             }
             if (event.affectsConfiguration(Preferences.FILE_SIZE_LIMIT.id)) {
                 this.fileSizeLimit = this.getFileSizeLimit();
-            }
-            if (event.affectsConfiguration(Preferences.MAX_ENTRIES_PER_FILE.id)) {
-                this.maxEntriesPerFile = this.getMaxEntriesPerFile();
             }
             if (event.affectsConfiguration(Preferences.SAVE_DELAY.id)) {
                 this.saveDelay = this.getSaveDelay();
@@ -85,22 +80,6 @@ export class LocalHistoryPreferencesService {
     }
 
     /**
-     * Get the maximum allowed entries for a file.
-     * @returns the maximum allowed entries for a file.
-     */
-    get maxEntriesPerFile(): number {
-        return this._maxEntriesPerFile;
-    }
-
-    /**
-     * Set the maximum allowed entries for a file.
-     * @param max the maximum allowed entries for a file.
-     */
-    set maxEntriesPerFile(max: number) {
-        this._maxEntriesPerFile = max;
-    }
-
-    /**
      * Get the save delay in milliseconds.
      * @returns the save delay in milliseconds.
      */
@@ -149,14 +128,6 @@ export class LocalHistoryPreferencesService {
     private getFileSizeLimit(): number {
         const value = this.getPreferenceValueById(Preferences.FILE_SIZE_LIMIT.id);
         return typeof value === 'number' ? value : Preferences.FILE_SIZE_LIMIT.default as number;
-    }
-
-    /**
-     * Get the configuration value for `MAX_ENTRIES_PER_FILE`.
-     */
-    private getMaxEntriesPerFile(): number {
-        const value = this.getPreferenceValueById(Preferences.MAX_ENTRIES_PER_FILE.id);
-        return typeof value === 'number' ? value : Preferences.MAX_ENTRIES_PER_FILE.default as number;
     }
 
     /**
