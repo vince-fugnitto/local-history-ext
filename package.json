@@ -228,7 +228,6 @@
         "@typescript-eslint/parser": "^2.25.0",
         "eslint": "^6.8.0",
         "eslint-config-google": "^0.14.0",
-        "find-remove": "^2.0.1",
         "glob": "^7.1.5",
         "mocha": "^6.2.2",
         "tslint": "^5.20.0",
@@ -237,6 +236,7 @@
     },
     "dependencies": {
         "delete-empty": "^3.0.0",
+        "find-remove": "^2.0.1",
         "minimatch": "^3.0.4",
         "moment": "2.24.0",
         "shelljs": "^0.8.4"
