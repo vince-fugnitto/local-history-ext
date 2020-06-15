@@ -493,8 +493,9 @@ export class LocalHistoryManager {
     private fileSizeLimit(document: vscode.TextDocument): boolean {
         if (fs.existsSync(document.fileName)) {
             const sizeInBytes = fs.statSync(document.uri.fsPath).size;
-            const sizeInMegaBytes = sizeInBytes / 1000000;
+            const sizeInMegaBytes = sizeInBytes / 1048576;
             if (sizeInMegaBytes > this.localHistoryPreferencesService.fileSizeLimit) {
+                OutputManager.appendInfoMessage(`No new revisions created for file '${path.basename(document.fileName)}'. The file exceeds the local history file size limit (${this.localHistoryPreferencesService.fileSizeLimit}Mb).`);
                 return false;
             }
             return true;
