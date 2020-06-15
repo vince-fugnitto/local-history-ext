@@ -22,7 +22,9 @@ The following are some notable features the extension provides:
 
 - ### Automatic Revisions
 
-  The extension **automatically** creates readonly revisions of a file when a save occurs without the need for manual intervention by a user. The revisions are automatically tracked by the extension, and the extension allows users the ability to manage them directly in the application.
+  The extension **automatically** creates readonly revisions of a file when a save occurs without the need for manual intervention by a user. The revisions are automatically tracked by the extension, and the extension allows users the ability to manage them directly in the application. In addition to a unique timestamp (ex. `20200610135906_973`), a revision’s filename also contains one of the following context metadata: 
+  - `m` (revision created due to a manual change in the content of the file)
+  - `r` (revision created before a revert was made by the user)
 
   _Note_: the automatic creation of revisions are based on a number of factors including contributed preferences which control the logic. Please review the [preferences documentation](#preferences) in order to understand how they can affect saving.
 
