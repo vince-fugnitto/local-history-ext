@@ -151,6 +151,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Update the message.
     treeView.message = treeDataProvider.getTreeViewMessage();
+    treeView.onDidChangeVisibility(() => {
+        treeView.message = treeDataProvider.getTreeViewMessage();
+    });
     treeDataProvider.onDidChangeTreeData(() => {
         treeView.message = treeDataProvider.getTreeViewMessage();
     });
