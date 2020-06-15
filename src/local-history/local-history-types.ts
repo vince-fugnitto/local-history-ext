@@ -81,7 +81,7 @@ export namespace Preferences {
     };
 
     /**
-     * Controls the maximum acceptable file size for storing revisions.
+     * Controls the maximum acceptable file size for storing revisions in megabytes.
      */
     export const FILE_SIZE_LIMIT: LocalHistoryPreference = {
         id: 'local-history.fileSizeLimit',
