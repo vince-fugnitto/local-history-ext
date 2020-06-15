@@ -196,7 +196,7 @@ The following are some notable features the extension provides:
 
 ## Development
 
-- [QuickStart](./vsc-extension-quickstart.md)
+- [QuickStart](https://github.com/vince-fugnitto/local-history-ext/blob/master/docs/vsc-extension-quickstart.md)
 
 ## License
 
