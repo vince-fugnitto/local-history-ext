@@ -135,7 +135,7 @@ export class LocalHistoryPreferencesService {
      */
     private getFileLimit(): number {
         const value = this.getPreferenceValueById(Preferences.FILE_LIMIT.id);
-        return typeof value === 'number' ? value : Preferences.FILE_LIMIT.default as number;
+        return typeof value === 'number' && value >= Preferences.FILE_LIMIT.minimum ? value : Preferences.FILE_LIMIT.default as number;
     }
 
     /**
@@ -143,7 +143,7 @@ export class LocalHistoryPreferencesService {
      */
     private getFileSizeLimit(): number {
         const value = this.getPreferenceValueById(Preferences.FILE_SIZE_LIMIT.id);
-        return typeof value === 'number' ? value : Preferences.FILE_SIZE_LIMIT.default as number;
+        return typeof value === 'number' && value >= Preferences.FILE_SIZE_LIMIT.minimum ? value : Preferences.FILE_SIZE_LIMIT.default as number;
     }
 
     /**
@@ -151,6 +151,6 @@ export class LocalHistoryPreferencesService {
      */
     private getSaveDelay(): number {
         const value = this.getPreferenceValueById(Preferences.SAVE_DELAY.id);
-        return typeof value === 'number' ? value : Preferences.SAVE_DELAY.default as number;
+        return typeof value === 'number' && value >= Preferences.SAVE_DELAY.minimum ? value : Preferences.SAVE_DELAY.default as number;
     }
 }
