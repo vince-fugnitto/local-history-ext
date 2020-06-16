@@ -102,7 +102,8 @@ export class LocalHistoryTreeProvider implements vscode.TreeDataProvider<Revisio
         }
         let revisionsExist: boolean = false;
         try {
-            revisionsExist = fs.readdirSync(this.manager.getRevisionFolderPath(editor.document.fileName)).length !== 0;
+            const revisionFolderPath = this.manager.getRevisionFolderPath(editor.document.fileName);
+            revisionsExist = fs.existsSync(revisionFolderPath) && fs.readdirSync(revisionFolderPath).length !== 0;
         } catch (e) {
             OutputManager.appendWarningMessage(['An error has occurred when updating the tree view message', e]);
         }
