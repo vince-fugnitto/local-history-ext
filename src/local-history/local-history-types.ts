@@ -37,6 +37,10 @@ type LocalHistoryPreference = {
      * The default value for the preference.
      */
     default: any;
+    /**
+     * The minimum value for the preference.
+     */
+    minimum?: any;
 };
 
 /**
@@ -77,7 +81,8 @@ export namespace Preferences {
      */
     export const FILE_LIMIT: LocalHistoryPreference = {
         id: 'local-history.fileLimit',
-        default: 30
+        default: 30,
+        minimum: 5
     };
 
     /**
@@ -85,7 +90,8 @@ export namespace Preferences {
      */
     export const FILE_SIZE_LIMIT: LocalHistoryPreference = {
         id: 'local-history.fileSizeLimit',
-        default: 5
+        default: 5,
+        minimum: 0.5
     };
 
     /**
@@ -93,7 +99,8 @@ export namespace Preferences {
      */
     export const SAVE_DELAY: LocalHistoryPreference = {
         id: 'local-history.saveDelay',
-        default: 300000
+        default: 300000,
+        minimum: 0,
     };
 
 }
