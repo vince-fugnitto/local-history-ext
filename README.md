@@ -9,6 +9,14 @@
 
 <img src='https://api.travis-ci.com/vince-fugnitto/local-history-ext.svg?branch=master' />
 
+- [Description](#description)
+- [Features](#features)
+- [Documentation](#documentation)
+  - [Commands](#commands)
+  - [Preferences](#preferences)
+- [Development](#development)
+- [License](#license)
+
 
 ## Description
 
