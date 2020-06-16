@@ -127,6 +127,17 @@ The following are some notable features the extension provides:
   
   Using a simple storage allows users to easily navigate and find revisions outside of the application when they need to view all previous revisions quickly.
 
+- ### Output Channel
+
+  The extension support an `output channel` (named 'Local History') which logs important events and warnings to the end-user such as file creations, deletions, and errors. Each log includes both a severity (info, warning, or error), and a timestamp for improved traceability of important commands and actions executed by the extension.
+
+  <div align='center'>
+  
+  <img src='./assets/screenshots/output-channel.png' style='border-radius:10px; width: 500px'/>
+
+  </div>
+
+
 - ### Local History Commands
 
   The extension contributes [commands](#commands) to the command palette, explorer context menu and the editor context menu. 
