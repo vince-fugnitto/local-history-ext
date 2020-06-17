@@ -153,6 +153,12 @@ export class LocalHistoryManager {
      * Save the current context of the active editor.
      */
     public async saveEditorContext(document: vscode.TextDocument, isRevertChange?: boolean): Promise<void> {
+
+        // Skip creating revisions for documents which are not updated.
+        if (document.version === 1) {
+            return;
+        }
+
         if (!this.fileSizeLimit(document) || this.isFileExcluded(document)) {
             return;
         }
